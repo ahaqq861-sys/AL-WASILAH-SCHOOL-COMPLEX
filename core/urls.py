@@ -6,8 +6,8 @@ from django.conf.urls.static import static
 from django.views.static import serve
 
 urlpatterns = [
-    # Clicking "Visit site" or going to / now opens the portal dashboard
-    path('', RedirectView.as_view(url='/portal/dashboard/', permanent=False)),
+    # Direct home page (/) straight to portal login without looping
+    path('', RedirectView.as_view(url='/portal/', permanent=False)),
 
     # Django Admin Panel
     path('admin/', admin.site.urls),
