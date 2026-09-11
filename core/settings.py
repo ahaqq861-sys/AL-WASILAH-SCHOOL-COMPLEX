@@ -140,3 +140,7 @@ LOGOUT_REDIRECT_URL = 'login'
 # Default primary key field type
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# CSRF Trust Configuration for Render
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+]
