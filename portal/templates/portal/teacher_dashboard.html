@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><title>Teacher Portal | AL-WASILAH</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; color: #1e293b; }
+        header { background: #065f46; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #10b981; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>AL-WASILAH — Teacher Portal</h2>
+        <div>
+            <span>Welcome, Teacher <strong>{{ user.username }}</strong></span>
+            <a href="{% url 'logout' %}" class="logout-btn" style="margin-left: 15px;">Logout</a>
+        </div>
+    </header>
+    <div class="container">
+        <h3>Teacher Management Dashboard</h3>
+        <div class="card-grid">
+            <div class="card"><h4>Class Roster</h4><p>View registered students in your assigned classes.</p></div>
+            <div class="card"><h4>Grade Entry</h4><p>Input and upload continuous assessment scores and terminal exam marks.</p></div>
+            <div class="card"><h4>Terminal Remarks</h4><p>Add teacher comments and conduct evaluations on student reports.</p></div>
+        </div>
+    </div>
+</body>
+</html>
