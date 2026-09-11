@@ -2,58 +2,83 @@
 
 {% block content %}
 <div class="space-y-6">
-    <!-- Header Welcome Banner -->
-    <div class="bg-wine text-white rounded-lg p-6 shadow-md">
-        <h2 class="text-2xl font-bold">Welcome, {{ request.user.get_full_name|default:request.user.username }}!</h2>
-        <p class="text-yellow-200 text-sm mt-1">AL-WASILAH SCHOOL COMPLEX Management Portal</p>
+
+    <!-- UDS Style Profile Summary Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 rounded-full bg-wine/10 text-wine border border-wine/20 flex items-center justify-center font-bold text-2xl">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h2>
+                <p class="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                    {% if request.user.is_superuser %}System Administrator
+                    {% elif request.user.teacher_profile %}Academic Staff / Instructor
+                    {% else %}Enrolled Student{% endif %}
+                </p>
+                <p class="text-xs text-gray-500 mt-0.5">Academic Session: 2025/2026 | Term 1</p>
+            </div>
+        </div>
+        <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-center text-xs text-amber-800">
+            <span class="block font-bold">Portal Status</span>
+            <span class="inline-block mt-0.5 bg-green-600 text-white font-bold px-2 py-0.5 rounded text-[10px] uppercase">Active</span>
+        </div>
     </div>
 
-    <!-- Quick Navigation Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-wine">
+    <!-- Role-Based Dashboard Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <!-- Card 1 -->
+        <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-200 border-t-4 border-t-wine hover:shadow-md transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Directory</p>
-                    <h3 class="text-lg font-bold text-gray-800 mt-1">Students</h3>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Directory</p>
+                    <h3 class="text-base font-bold text-gray-800 mt-1">Student Management</h3>
                 </div>
-                <div class="p-3 bg-wine/10 text-wine rounded-full">
-                    <i class="fas fa-user-graduate text-xl"></i>
+                <div class="p-3 bg-wine/10 text-wine rounded-lg">
+                    <i class="fas fa-users text-xl"></i>
                 </div>
             </div>
+            <p class="text-xs text-gray-500 mt-3">Access profile information and academic status.</p>
             <a href="{% url 'manage_students' %}" class="inline-block mt-4 text-xs font-bold text-wine hover:underline">
-                View All Students &rarr;
+                Open Directory &rarr;
             </a>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-wine">
+        <!-- Card 2 -->
+        <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-200 border-t-4 border-t-amber-500 hover:shadow-md transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Academic</p>
-                    <h3 class="text-lg font-bold text-gray-800 mt-1">Grades & Performance</h3>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Academic Performance</p>
+                    <h3 class="text-base font-bold text-gray-800 mt-1">Terminal Reports</h3>
                 </div>
-                <div class="p-3 bg-wine/10 text-wine rounded-full">
-                    <i class="fas fa-file-invoice text-xl"></i>
+                <div class="p-3 bg-amber-500/10 text-amber-600 rounded-lg">
+                    <i class="fas fa-file-alt text-xl"></i>
                 </div>
             </div>
-            <a href="#" class="inline-block mt-4 text-xs font-bold text-wine hover:underline">
-                View Report Cards &rarr;
+            <p class="text-xs text-gray-500 mt-3">View class grades, exam scores, and cumulative averages.</p>
+            <a href="#" class="inline-block mt-4 text-xs font-bold text-amber-600 hover:underline">
+                View Reports &rarr;
             </a>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow border-l-4 border-wine">
+        <!-- Card 3 -->
+        <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-200 border-t-4 border-t-blue-600 hover:shadow-md transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-xs text-gray-500 uppercase font-semibold">Schedules</p>
-                    <h3 class="text-lg font-bold text-gray-800 mt-1">Class Timetable</h3>
+                    <p class="text-xs font-bold text-gray-400 uppercase">Schedules</p>
+                    <h3 class="text-base font-bold text-gray-800 mt-1">Class Timetable</h3>
                 </div>
-                <div class="p-3 bg-wine/10 text-wine rounded-full">
-                    <i class="fas fa-calendar-alt text-xl"></i>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <i class="fas fa-calendar-check text-xl"></i>
                 </div>
             </div>
-            <a href="#" class="inline-block mt-4 text-xs font-bold text-wine hover:underline">
-                Check Timetable &rarr;
+            <p class="text-xs text-gray-500 mt-3">Check weekly timetable slots and subject allocations.</p>
+            <a href="#" class="inline-block mt-4 text-xs font-bold text-blue-600 hover:underline">
+                Check Schedule &rarr;
             </a>
         </div>
+
     </div>
 </div>
 {% endblock %}
