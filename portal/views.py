@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import StudentProfile, TeacherProfile, SchoolBranding
 
@@ -18,7 +19,10 @@ def custom_login(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
         
-    branding = SchoolBranding.get_config()
+    try:
+        branding = SchoolBranding.get_config()
+    except Exception:
+        branding = None
     
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -41,13 +45,20 @@ def custom_logout(request):
 
 @login_required
 def dashboard(request):
-    branding = SchoolBranding.get_config()
+    try:
+        branding = SchoolBranding.get_config()
+    except Exception:
+        branding = None
     return render(request, 'portal/dashboard.html', {'branding': branding})
 
 
 @login_required
 def manage_students(request):
-    branding = SchoolBranding.get_config()
+    try:
+        branding = SchoolBranding.get_config()
+    except Exception:
+        branding = None
+
     generated_credentials = None
 
     if request.method == 'POST' and 'create_student' in request.POST:
@@ -97,7 +108,11 @@ def manage_students(request):
 
 @login_required
 def manage_teachers(request):
-    branding = SchoolBranding.get_config()
+    try:
+        branding = SchoolBranding.get_config()
+    except Exception:
+        branding = None
+
     generated_credentials = None
 
     if request.method == 'POST' and 'create_teacher' in request.POST:
