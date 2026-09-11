@@ -6,8 +6,8 @@ from django.conf.urls.static import static
 from django.views.static import serve
 
 urlpatterns = [
-    # Redirect root URL to admin panel
-    path('', RedirectView.as_view(url='/admin/', permanent=False)),
+    # Clicking "Visit site" or going to / now opens the portal dashboard
+    path('', RedirectView.as_view(url='/portal/dashboard/', permanent=False)),
 
     # Django Admin Panel
     path('admin/', admin.site.urls),
@@ -15,7 +15,7 @@ urlpatterns = [
     # Main Portal Frontend URLs
     path('portal/', include('portal.urls')),
 
-    # Serve media files on production server
+    # Serve uploaded media files
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
 
