@@ -1,45 +1,17 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Student Portal | {{ branding.school_name }}</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f8fafc; color: #1a202c; }
-        header { background: {{ branding.primary_color }}; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #d4af37; }
-        .logout-btn { background: #ffffff; color: {{ branding.primary_color }}; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 700; cursor: pointer; text-decoration: none; }
-        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid {{ branding.primary_color }}; }
-    </style>
-</head>
-<body>
-
-<header>
-    <h2>{{ branding.school_name }} — Student Access</h2>
-    <div>
-        <span style="margin-right: 15px;">Student: <strong>{{ user.get_full_name|default:user.username }}</strong></span>
-        <a href="{% url 'logout' %}" class="logout-btn">Sign Out</a>
+<div class="card-grid">
+    <div class="card">
+        <h4>Terminal Assessment</h4>
+        <p>View latest subject grades and term continuous reports.</p>
+        <a href="{% url 'student_assessment' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">View Report Cards &rarr;</a>
     </div>
-</header>
-
-<div class="container">
-    <h3>Student Portal Overview</h3>
-    <div class="card-grid">
-        <div class="card">
-            <h4>Terminal Assessment Reports</h4>
-            <p style="color: #718096; margin-top: 0.5rem;">View end-of-term academic results and overall position.</p>
-        </div>
-        <div class="card">
-            <h4>Subject Timetable</h4>
-            <p style="color: #718096; margin-top: 0.5rem;">Check daily class schedule and assigned subject instructors.</p>
-        </div>
-        <div class="card">
-            <h4>Attendance History</h4>
-            <p style="color: #718096; margin-top: 0.5rem;">Track attendance percentages across the academic term.</p>
-        </div>
+    <div class="card">
+        <h4>Class Schedule</h4>
+        <p>Check daily timetables and assigned subject teachers.</p>
+        <a href="{% url 'student_schedule' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">View Timetable &rarr;</a>
+    </div>
+    <div class="card">
+        <h4>Attendance Record</h4>
+        <p>Track your academic attendance record for the term.</p>
+        <a href="{% url 'student_attendance' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">Check Attendance &rarr;</a>
     </div>
 </div>
-
-</body>
-</html>

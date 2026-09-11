@@ -1,45 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Teacher Management | {{ branding.school_name }}</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background: #f8fafc; color: #1a202c; }
-        header { background: {{ branding.primary_color }}; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #d4af37; }
-        .logout-btn { background: #ffffff; color: {{ branding.primary_color }}; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 700; cursor: pointer; text-decoration: none; }
-        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid {{ branding.primary_color }}; }
-    </style>
-</head>
-<body>
-
-<header>
-    <h2>{{ branding.school_name }} — Academic Staff Portal</h2>
-    <div>
-        <span style="margin-right: 15px;">Staff: <strong>{{ user.get_full_name|default:user.username }}</strong></span>
-        <a href="{% url 'logout' %}" class="logout-btn">Sign Out</a>
+<div class="card-grid">
+    <div class="card">
+        <h4>Class Roster</h4>
+        <p>View registered students in your assigned classes.</p>
+        <a href="{% url 'teacher_roster' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">Open Roster &rarr;</a>
     </div>
-</header>
-
-<div class="container">
-    <h3>Teacher Control Panel</h3>
-    <div class="card-grid">
-        <div class="card">
-            <h4>Assigned Classes & Rosters</h4>
-            <p style="color: #718096; margin-top: 0.5rem;">Access student enrollment rosters and attendance sheets.</p>
-        </div>
-        <div class="card">
-            <h4>Continuous Assessment Entry</h4>
-            <p style="color: #718096; margin-top: 0.5rem;">Upload student test scores, homework marks, and terminal grades.</p>
-        </div>
-        <div class="card">
-            <h4>Terminal Remarks & Remarks</h4>
-            <p style="color: #718096; margin-top: 0.5rem;">Submit terminal conduct evaluations and teacher comments.</p>
-        </div>
+    <div class="card">
+        <h4>Grade Entry</h4>
+        <p>Input assessment scores and exam marks for students.</p>
+        <a href="{% url 'teacher_grade_entry' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">Enter Marks &rarr;</a>
     </div>
 </div>
-
-</body>
-</html>

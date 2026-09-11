@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import SchoolBranding, TeacherProfile, StudentProfile
+from .models import SchoolBranding, TeacherProfile, StudentProfile, GradeRecord, ClassSchedule, AttendanceRecord
 
 def custom_login(request):
     if request.user.is_authenticated:
@@ -60,12 +60,17 @@ def dashboard(request):
     except Exception:
         total_teachers = 0
 
+    students_list = StudentProfile.objects.select_related('user').all()
+    teachers_list = TeacherProfile.objects.select_related('user').all()
+
     context = {
         'user': request.user,
         'role': role,
         'branding': branding,
         'total_students': total_students,
         'total_teachers': total_teachers,
+        'students_list': students_list,
+        'teachers_list': teachers_list,
     }
 
     if role == 'admin':
@@ -75,6 +80,76 @@ def dashboard(request):
     else:
         return render(request, 'portal/student_dashboard.html', context)
 
+
+# ================= STUDENT VIEWS =================
+@login_required
+def student_assessment(request):
+    branding = SchoolBranding.get_config()
+    student_profile = getattr(request.user, 'student_profile', None)
+    grades = GradeRecord.objects.filter(student=student_profile) if student_profile else []
+    return render(request, 'portal/student_assessment.html', {'branding': branding, 'grades': grades})
+
+@login_required
+def student_schedule(request):
+    branding = SchoolBranding.get_config()
+    student_profile = getattr(request.user, 'student_profile', None)
+    schedules = ClassSchedule.objects.filter(class_name=student_profile.current_class) if student_profile else []
+    return render(request, 'portal/student_schedule.html', {'branding': branding, 'schedules': schedules})
+
+@login_required
+def student_attendance(request):
+    branding = SchoolBranding.get_config()
+    student_profile = getattr(request.user, 'student_profile', None)
+    attendance = AttendanceRecord.objects.filter(student=student_profile) if student_profile else []
+    return render(request, 'portal/student_attendance.html', {'branding': branding, 'attendance': attendance})
+
+
+# ================= TEACHER VIEWS =================
+@login_required
+def teacher_roster(request):
+    branding = SchoolBranding.get_config()
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    students = StudentProfile.objects.filter(current_class=teacher_profile.assigned_class) if teacher_profile and teacher_profile.assigned_class else StudentProfile.objects.all()
+    return render(request, 'portal/teacher_roster.html', {'branding': branding, 'students': students})
+
+@login_required
+def teacher_grade_entry(request):
+    branding = SchoolBranding.get_config()
+    students = StudentProfile.objects.all()
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        subject = request.POST.get('subject')
+        class_score = float(request.POST.get('class_score', 0))
+        exam_score = float(request.POST.get('exam_score', 0))
+        remarks = request.POST.get('remarks', '')
+
+        student = get_object_or_404(StudentProfile, id=student_id)
+        GradeRecord.objects.create(
+            student=student,
+            subject=subject,
+            class_score=class_score,
+            exam_score=exam_score,
+            teacher_remarks=remarks
+        )
+        messages.success(request, f"Grade recorded successfully for {student.user.get_full_name() or student.user.username}!")
+        return redirect('teacher_grade_entry')
+
+    return render(request, 'portal/teacher_grade_entry.html', {'branding': branding, 'students': students})
+
+
+# ================= ADMIN VIEWS =================
+@login_required
+def admin_students_db(request):
+    branding = SchoolBranding.get_config()
+    students = StudentProfile.objects.select_related('user').all()
+    return render(request, 'portal/admin_students.html', {'branding': branding, 'students': students})
+
+@login_required
+def admin_teachers_db(request):
+    branding = SchoolBranding.get_config()
+    teachers = TeacherProfile.objects.select_related('user').all()
+    return render(request, 'portal/admin_teachers.html', {'branding': branding, 'teachers': teachers})
 
 @login_required
 def create_user_account(request):
@@ -112,7 +187,6 @@ def create_user_account(request):
             messages.success(request, f"Student account '{username}' successfully created!")
 
     return redirect('dashboard')
-
 
 @login_required
 def reset_user_password(request):
