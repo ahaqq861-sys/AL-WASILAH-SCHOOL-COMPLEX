@@ -17,6 +17,13 @@ ALLOWED_HOSTS = [
     '*'
 ]
 
+# CSRF Trusted Origins for HTTPS on Render
+CSRF_TRUSTED_ORIGINS = [
+    'https://wasilah-django-app-0ygv.onrender.com',
+    'http://localhost',
+    'http://127.0.0.1',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,7 +72,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-# Database Setup (SQLite default)
+# Database Setup
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -97,15 +104,16 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-# Cloudinary Configuration (Can be set via Render Environment Variables)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
 }
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Session & Security Settings
+SESSION_SAVE_EVERY_REQUEST = True
 
 # Authentication & Session Redirect Routes
 LOGIN_REDIRECT_URL = '/portal/dashboard/'

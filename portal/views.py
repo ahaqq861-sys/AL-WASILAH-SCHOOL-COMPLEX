@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -14,7 +14,7 @@ def custom_login(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
-        role = request.POST.get('role')
+        role = request.POST.get('role', 'student')
 
         user = authenticate(request, username=username, password=password)
 
@@ -50,9 +50,15 @@ def dashboard(request):
         else:
             role = 'student'
 
-    # Statistics for Admin Portal Dashboard
-    total_students = StudentProfile.objects.count()
-    total_teachers = TeacherProfile.objects.count()
+    try:
+        total_students = StudentProfile.objects.count()
+    except Exception:
+        total_students = 0
+
+    try:
+        total_teachers = TeacherProfile.objects.count()
+    except Exception:
+        total_teachers = 0
 
     context = {
         'user': request.user,
@@ -72,7 +78,6 @@ def dashboard(request):
 
 @login_required
 def create_user_account(request):
-    """Admin function to provision new teacher or student login credentials."""
     if not (request.user.is_superuser or request.user.is_staff):
         messages.error(request, "Unauthorized access.")
         return redirect('dashboard')
@@ -111,7 +116,6 @@ def create_user_account(request):
 
 @login_required
 def reset_user_password(request):
-    """Admin function to reset passwords for students and teachers."""
     if not (request.user.is_superuser or request.user.is_staff):
         messages.error(request, "Unauthorized access.")
         return redirect('dashboard')

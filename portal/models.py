@@ -24,7 +24,6 @@ class SchoolBranding(models.Model):
             config, created = cls.objects.get_or_create(id=1)
             return config
         except Exception:
-            # Safe fallback if table doesn't exist yet in DB
             return cls(
                 school_name="AL-WASILAH SCHOOL COMPLEX",
                 tagline="Excellence in Knowledge & Character",
