@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: wasilah-django-app
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate
+    startCommand: gunicorn core.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DATABASE_URL
+        sync: false
