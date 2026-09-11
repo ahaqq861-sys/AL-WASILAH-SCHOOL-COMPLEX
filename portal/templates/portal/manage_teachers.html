@@ -7,9 +7,9 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h2 class="text-xl font-bold text-wine flex items-center gap-2">
-                <i class="fas fa-chalkboard-teacher"></i> Academic Staff & Teacher Directory
+                <i class="fas fa-chalkboard-teacher"></i> Academic Staff & Teacher Account Management
             </h2>
-            <p class="text-xs text-gray-500 mt-1">Manage teaching staff, assigned subjects, and department rosters for AL-WASILAH SCHOOL COMPLEX.</p>
+            <p class="text-xs text-gray-500 mt-1">Register teaching staff profiles and issue portal login access credentials.</p>
         </div>
         <div>
             <span class="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-md border border-amber-300">
@@ -18,10 +18,59 @@
         </div>
     </div>
 
+    <!-- Generated Login Credentials Notice -->
+    {% if generated_credentials %}
+    <div class="bg-amber-50 border-2 border-amber-400 rounded-lg p-5 text-gray-900 shadow-md">
+        <h3 class="font-bold text-wine text-base flex items-center gap-2 mb-2">
+            <i class="fas fa-key text-amber-600"></i> New {{ generated_credentials.role }} Login Created
+        </h3>
+        <p class="text-xs text-gray-600 mb-3">Provide these temporary login credentials to <strong>{{ generated_credentials.name }}</strong>:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-3 rounded border border-amber-200 font-mono text-sm">
+            <div><span class="text-gray-500 text-xs block font-sans">Username:</span> <strong>{{ generated_credentials.username }}</strong></div>
+            <div><span class="text-gray-500 text-xs block font-sans">Temporary Password:</span> <strong class="text-wine">{{ generated_credentials.password }}</strong></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Add Teacher Form Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+        <h3 class="text-sm font-bold text-wine uppercase tracking-wider mb-4 border-b pb-2">
+            <i class="fas fa-user-plus mr-1"></i> Register New Staff Member & Issue Login
+        </h3>
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            {% csrf_token %}
+            <div>
+                <label class="block font-medium text-gray-700 mb-1">First Name</label>
+                <input type="text" name="first_name" required class="w-full border border-gray-300 rounded p-2 focus:ring-wine focus:border-wine">
+            </div>
+            <div>
+                <label class="block font-medium text-gray-700 mb-1">Last Name</label>
+                <input type="text" name="last_name" required class="w-full border border-gray-300 rounded p-2 focus:ring-wine focus:border-wine">
+            </div>
+            <div>
+                <label class="block font-medium text-gray-700 mb-1">Staff ID (Username)</label>
+                <input type="text" name="employee_id" placeholder="e.g. TCH-2026-001" required class="w-full border border-gray-300 rounded p-2 focus:ring-wine focus:border-wine">
+            </div>
+            <div>
+                <label class="block font-medium text-gray-700 mb-1">Assigned Subject / Role</label>
+                <input type="text" name="subject_assigned" placeholder="e.g. Mathematics" required class="w-full border border-gray-300 rounded p-2 focus:ring-wine focus:border-wine">
+            </div>
+            <div>
+                <label class="block font-medium text-gray-700 mb-1">Phone Number</label>
+                <input type="text" name="phone_number" placeholder="e.g. +233 24 000 0000" class="w-full border border-gray-300 rounded p-2 focus:ring-wine focus:border-wine">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" name="create_teacher" class="w-full bg-wine hover:bg-wine/90 text-white font-bold py-2 px-4 rounded transition">
+                    <i class="fas fa-user-shield mr-1"></i> Create Staff Account
+                </button>
+            </div>
+        </form>
+    </div>
+
     <!-- Teacher Table Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Registered Teaching Staff</h3>
+        <div class="p-4 bg-gray-50 border-b border-gray-200">
+            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Registered Teaching Staff Roster</h3>
         </div>
 
         <div class="overflow-x-auto">
@@ -29,11 +78,11 @@
                 <thead>
                     <tr class="bg-wine text-white text-xs font-semibold uppercase tracking-wider">
                         <th class="py-3 px-4">#</th>
-                        <th class="py-3 px-4">Staff ID</th>
+                        <th class="py-3 px-4">Staff ID / Login</th>
                         <th class="py-3 px-4">Full Name</th>
-                        <th class="py-3 px-4">Assigned Subject / Class</th>
+                        <th class="py-3 px-4">Assigned Subject</th>
                         <th class="py-3 px-4">Contact Phone</th>
-                        <th class="py-3 px-4 text-center">Status</th>
+                        <th class="py-3 px-4 text-center">Login Status</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm divide-y divide-gray-200">
@@ -42,7 +91,7 @@
                         <td class="py-3 px-4 text-xs font-mono text-gray-500">{{ forloop.counter }}</td>
                         <td class="py-3 px-4 font-semibold text-wine font-mono">{{ teacher.employee_id|default:"N/A" }}</td>
                         <td class="py-3 px-4 font-medium text-gray-900">
-                            {{ teacher.user.get_full_name|default:teacher.user.username }}
+                            {{ teacher.user.get_full_name|default:student.user.username }}
                         </td>
                         <td class="py-3 px-4">
                             <span class="bg-wine/10 text-wine border border-wine/20 px-2.5 py-0.5 rounded text-xs font-bold">
@@ -53,7 +102,7 @@
                             {{ teacher.phone_number|default:"Not Provided" }}
                         </td>
                         <td class="py-3 px-4 text-center">
-                            <span class="bg-green-100 text-green-800 text-[11px] font-bold px-2 py-0.5 rounded uppercase">Active Staff</span>
+                            <span class="bg-green-100 text-green-800 text-[11px] font-bold px-2 py-0.5 rounded uppercase">Account Enabled</span>
                         </td>
                     </tr>
                     {% empty %}
