@@ -7,21 +7,21 @@
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h2 class="text-xl font-bold text-wine flex items-center gap-2">
-                <i class="fas fa-users-cog"></i> Student Directory & Management
+                <i class="fas fa-chalkboard-teacher"></i> Academic Staff & Teacher Directory
             </h2>
-            <p class="text-xs text-gray-500 mt-1">View, manage, and verify all enrolled student records for AL-WASILAH SCHOOL COMPLEX.</p>
+            <p class="text-xs text-gray-500 mt-1">Manage teaching staff, assigned subjects, and department rosters for AL-WASILAH SCHOOL COMPLEX.</p>
         </div>
         <div>
             <span class="bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1.5 rounded-md border border-amber-300">
-                Total Enrolled: {{ students|length }}
+                Total Staff: {{ teachers|length }}
             </span>
         </div>
     </div>
 
-    <!-- Student Table Card -->
+    <!-- Teacher Table Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div class="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Enrolled Student List</h3>
+            <h3 class="text-xs font-bold text-gray-600 uppercase tracking-wider">Registered Teaching Staff</h3>
         </div>
 
         <div class="overflow-x-auto">
@@ -29,38 +29,38 @@
                 <thead>
                     <tr class="bg-wine text-white text-xs font-semibold uppercase tracking-wider">
                         <th class="py-3 px-4">#</th>
-                        <th class="py-3 px-4">Student ID</th>
+                        <th class="py-3 px-4">Staff ID</th>
                         <th class="py-3 px-4">Full Name</th>
-                        <th class="py-3 px-4">Class</th>
-                        <th class="py-3 px-4">Guardian Contact</th>
+                        <th class="py-3 px-4">Assigned Subject / Class</th>
+                        <th class="py-3 px-4">Contact Phone</th>
                         <th class="py-3 px-4 text-center">Status</th>
                     </tr>
                 </thead>
                 <tbody class="text-sm divide-y divide-gray-200">
-                    {% for student in students %}
+                    {% for teacher in teachers %}
                     <tr class="hover:bg-amber-50/50 transition">
                         <td class="py-3 px-4 text-xs font-mono text-gray-500">{{ forloop.counter }}</td>
-                        <td class="py-3 px-4 font-semibold text-wine font-mono">{{ student.student_id }}</td>
+                        <td class="py-3 px-4 font-semibold text-wine font-mono">{{ teacher.employee_id|default:"N/A" }}</td>
                         <td class="py-3 px-4 font-medium text-gray-900">
-                            {{ student.user.get_full_name|default:student.user.username }}
+                            {{ teacher.user.get_full_name|default:teacher.user.username }}
                         </td>
                         <td class="py-3 px-4">
                             <span class="bg-wine/10 text-wine border border-wine/20 px-2.5 py-0.5 rounded text-xs font-bold">
-                                {{ student.current_class }}
+                                {{ teacher.subject_assigned|default:"General" }}
                             </span>
                         </td>
                         <td class="py-3 px-4 text-xs text-gray-600 font-mono">
-                            {{ student.guardian_contact|default:"Not Provided" }}
+                            {{ teacher.phone_number|default:"Not Provided" }}
                         </td>
                         <td class="py-3 px-4 text-center">
-                            <span class="bg-green-100 text-green-800 text-[11px] font-bold px-2 py-0.5 rounded uppercase">Active</span>
+                            <span class="bg-green-100 text-green-800 text-[11px] font-bold px-2 py-0.5 rounded uppercase">Active Staff</span>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="6" class="py-8 text-center text-gray-500">
-                            <i class="fas fa-folder-open text-3xl text-gray-300 block mb-2"></i>
-                            No student profiles registered in the portal database yet.
+                            <i class="fas fa-chalkboard-teacher text-3xl text-gray-300 block mb-2"></i>
+                            No teacher profiles registered in the portal database yet.
                         </td>
                     </tr>
                     {% endfor %}
