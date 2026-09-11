@@ -56,7 +56,7 @@ class StudentProfile(models.Model):
 
 
 class GradeRecord(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_related='grades', related_name='grades')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='grades')
     subject = models.CharField(max_length=100)
     class_score = models.FloatField(default=0.0, help_text="Score out of 30 or 40")
     exam_score = models.FloatField(default=0.0, help_text="Score out of 60 or 70")
