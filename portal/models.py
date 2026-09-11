@@ -20,8 +20,20 @@ class SchoolBranding(models.Model):
 
     @classmethod
     def get_config(cls):
-        config, created = cls.objects.get_or_create(id=1)
-        return config
+        try:
+            config, created = cls.objects.get_or_create(id=1)
+            return config
+        except Exception:
+            # Safe fallback if table doesn't exist yet in DB
+            return cls(
+                school_name="AL-WASILAH SCHOOL COMPLEX",
+                tagline="Excellence in Knowledge & Character",
+                primary_color="#722F37",
+                secondary_color="#4A1F24",
+                phone_number="+233 20 000 0000",
+                email_address="info@alwasilah.edu.gh",
+                address="Tamale, Northern Region, Ghana"
+            )
 
 
 class TeacherProfile(models.Model):
