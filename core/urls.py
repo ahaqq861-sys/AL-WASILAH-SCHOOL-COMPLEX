@@ -4,15 +4,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    # Django Admin Interface
+    # Django Admin Panel
     path('admin/', admin.site.urls),
 
-    # Include routes from your portal app
-    # (If your portal app has its own urls.py)
+    # Includes all URLs from your portal app
     path('', include('portal.urls')),
 ]
 
-# Serve static and media files during development & production fallback
+# Serve media and static files in development/fallback
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
