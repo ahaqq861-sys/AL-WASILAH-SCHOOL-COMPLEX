@@ -1,42 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Administrator Portal | AL-WASILAH</title>
+    <meta charset="UTF-8">
+    <title>Admin Control Panel | {{ branding.school_name }}</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; color: #1e293b; }
-        header { background: #312e81; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .logout-btn { background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; text-decoration: none; }
-        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #6366f1; }
-        .admin-link { color: #4338ca; font-weight: bold; text-decoration: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f8fafc; color: #1a202c; }
+        header { background: {{ branding.primary_color }}; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #d4af37; }
+        .header-title { display: flex; align-items: center; gap: 1rem; }
+        .header-title img { max-height: 45px; background: white; padding: 2px; border-radius: 4px; }
+        .logout-btn { background: #ffffff; color: {{ branding.primary_color }}; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid {{ branding.primary_color }}; }
+        .stat-card h3 { font-size: 2rem; color: {{ branding.primary_color }}; }
+        .card-block { background: white; padding: 1.75rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .card-block h3 { color: {{ branding.primary_color }}; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #edf2f7; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .form-row input, .form-row select { width: 100%; padding: 0.65rem; border: 1px solid #cbd5e0; border-radius: 4px; }
+        .btn-action { background: {{ branding.primary_color }}; color: white; border: none; padding: 0.65rem 1.25rem; border-radius: 4px; font-weight: 600; cursor: pointer; }
+        .btn-action:hover { background: {{ branding.secondary_color }}; }
+        .alert { background: #c6f6d5; color: #22543d; border: 1px solid #9ae6b4; padding: 0.75rem; border-radius: 6px; margin-bottom: 1.5rem; }
     </style>
 </head>
 <body>
-    <header>
-        <h2>AL-WASILAH — Admin Portal</h2>
-        <div>
-            <span>Welcome, Administrator <strong>{{ user.username }}</strong></span>
-            <a href="{% url 'logout' %}" class="logout-btn" style="margin-left: 15px;">Logout</a>
+
+<header>
+    <div class="header-title">
+        {% if branding.logo %}<img src="{{ branding.logo.url }}" alt="Logo">{% endif %}
+        <h2>{{ branding.school_name }} — Admin Control Center</h2>
+    </div>
+    <div>
+        <span style="margin-right: 15px;">Admin: <strong>{{ user.username }}</strong></span>
+        <a href="{% url 'logout' %}" class="logout-btn">Sign Out</a>
+    </div>
+</header>
+
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <p style="color: #718096; font-size: 0.9rem;">Total Active Students</p>
+            <h3>{{ total_students }}</h3>
         </div>
-    </header>
-    <div class="container">
-        <h3>School Administration Control Center</h3>
-        <div class="card-grid">
-            <div class="card">
-                <h4>Student Database</h4>
-                <p>Register, edit, and manage all student accounts and profiles.</p>
-            </div>
-            <div class="card">
-                <h4>Teacher & Staff Accounts</h4>
-                <p>Assign classes, subjects, and roles to academic staff.</p>
-            </div>
-            <div class="card">
-                <h4>System Configurations</h4>
-                <p>Manage school academic years, term settings, and database backups.</p>
-                <a href="/admin/" class="admin-link">Advanced Django Data Console &rarr;</a>
-            </div>
+        <div class="stat-card">
+            <p style="color: #718096; font-size: 0.9rem;">Total Academic Staff</p>
+            <h3>{{ total_teachers }}</h3>
+        </div>
+        <div class="stat-card">
+            <p style="color: #718096; font-size: 0.9rem;">System Status</p>
+            <h3 style="color: #38a169; font-size: 1.3rem;">OPERATIONAL</h3>
         </div>
     </div>
+
+    <!-- User Provisioning -->
+    <div class="card-block">
+        <h3>Create New Student / Teacher Account</h3>
+        <form method="post" action="{% url 'create_user' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <select name="account_type" required>
+                    <option value="student">Student Account</option>
+                    <option value="teacher">Teacher Account</option>
+                </select>
+                <input type="text" name="username" placeholder="Username / Access ID" required>
+                <input type="text" name="id_code" placeholder="Student ID or Employee ID" required>
+            </div>
+            <div class="form-row">
+                <input type="text" name="first_name" placeholder="First Name" required>
+                <input type="text" name="last_name" placeholder="Last Name" required>
+                <input type="email" name="email" placeholder="Email Address">
+            </div>
+            <div class="form-row">
+                <input type="text" name="class_assignment" placeholder="Assigned Class (e.g. Basic 7 Gold)">
+                <input type="password" name="password" placeholder="Initial Password" required>
+            </div>
+            <button type="submit" class="btn-action">Provision User Account</button>
+        </form>
+    </div>
+
+    <!-- Reset Passwords -->
+    <div class="card-block">
+        <h3>User Password Reset Tool</h3>
+        <form method="post" action="{% url 'reset_password' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <input type="text" name="user_id" placeholder="Enter Target User ID Number" required>
+                <input type="password" name="new_password" placeholder="Enter New Password" required>
+            </div>
+            <button type="submit" class="btn-action" style="background-color: #d69e2e;">Override & Update Password</button>
+        </form>
+    </div>
+
+    <!-- Branding Link -->
+    <div class="card-block">
+        <h3>Branding & Portal Interface Customization</h3>
+        <p style="color: #718096; margin-bottom: 1rem;">Upload a new logo, change wine color codes, or update phone/email info shown on the login screen.</p>
+        <a href="/admin/portal/schoolbranding/1/change/" class="btn-action" style="display: inline-block; text-decoration: none;">Open Interface & Branding Settings &rarr;</a>
+        <a href="/admin/" class="btn-action" style="display: inline-block; text-decoration: none; background: #4a5568; margin-left: 10px;">Full Django Database Admin &rarr;</a>
+    </div>
+</div>
+
 </body>
 </html>

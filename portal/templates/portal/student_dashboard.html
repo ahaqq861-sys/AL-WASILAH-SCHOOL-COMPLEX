@@ -1,31 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Student Portal | AL-WASILAH</title>
+    <meta charset="UTF-8">
+    <title>Student Portal | {{ branding.school_name }}</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8fafc; color: #1e293b; }
-        header { background: #1e3a8a; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
-        .logout-btn { background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { background: #f8fafc; color: #1a202c; }
+        header { background: {{ branding.primary_color }}; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #d4af37; }
+        .logout-btn { background: #ffffff; color: {{ branding.primary_color }}; border: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 700; cursor: pointer; text-decoration: none; }
         .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem; }
-        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #2563eb; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 4px solid {{ branding.primary_color }}; }
     </style>
 </head>
 <body>
-    <header>
-        <h2>AL-WASILAH — Student Portal</h2>
-        <div>
-            <span>Welcome, <strong>{{ user.username }}</strong></span>
-            <a href="{% url 'logout' %}" class="logout-btn" style="margin-left: 15px;">Logout</a>
+
+<header>
+    <h2>{{ branding.school_name }} — Student Access</h2>
+    <div>
+        <span style="margin-right: 15px;">Student: <strong>{{ user.get_full_name|default:user.username }}</strong></span>
+        <a href="{% url 'logout' %}" class="logout-btn">Sign Out</a>
+    </div>
+</header>
+
+<div class="container">
+    <h3>Student Portal Overview</h3>
+    <div class="card-grid">
+        <div class="card">
+            <h4>Terminal Assessment Reports</h4>
+            <p style="color: #718096; margin-top: 0.5rem;">View end-of-term academic results and overall position.</p>
         </div>
-    </header>
-    <div class="container">
-        <h3>Student Overview</h3>
-        <div class="card-grid">
-            <div class="card"><h4>Terminal Assessment</h4><p>View latest subject grades and term continuous reports.</p></div>
-            <div class="card"><h4>Class Schedule</h4><p>Check daily timetables and assigned subject teachers.</p></div>
-            <div class="card"><h4>Attendance Record</h4><p>Track your academic attendance record for the term.</p></div>
+        <div class="card">
+            <h4>Subject Timetable</h4>
+            <p style="color: #718096; margin-top: 0.5rem;">Check daily class schedule and assigned subject instructors.</p>
+        </div>
+        <div class="card">
+            <h4>Attendance History</h4>
+            <p style="color: #718096; margin-top: 0.5rem;">Track attendance percentages across the academic term.</p>
         </div>
     </div>
+</div>
+
 </body>
 </html>

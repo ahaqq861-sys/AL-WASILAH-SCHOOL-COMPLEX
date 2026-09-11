@@ -1,26 +1,22 @@
 from django.contrib import admin
-from .models import TeacherProfile, ClassSection, Student, SubjectResult
+from .models import SchoolBranding, TeacherProfile, StudentProfile
+
+@admin.register(SchoolBranding)
+class SchoolBrandingAdmin(admin.ModelAdmin):
+    list_display = ('school_name', 'phone_number', 'email_address', 'primary_color')
+    
+    def has_add_permission(self, request):
+        # Prevent creating multiple config rows
+        if self.model.objects.exists():
+            return False
+        return super().has_add_permission(request)
 
 @admin.register(TeacherProfile)
 class TeacherProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'employee_id', 'department', 'phone_number')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'employee_id')
-    list_filter = ('department',)
+    list_display = ('employee_id', 'user', 'assigned_class', 'subject_specialization')
+    search_fields = ('employee_id', 'user__username', 'user__first_name', 'user__last_name')
 
-@admin.register(ClassSection)
-class ClassSectionAdmin(admin.ModelAdmin):
-    list_display = ('class_name', 'section_name', 'academic_year')
-    search_fields = ('class_name', 'section_name', 'academic_year')
-    list_filter = ('academic_year', 'class_name')
-
-@admin.register(Student)
-class StudentAdmin(admin.ModelAdmin):
-    list_display = ('student_id', 'first_name', 'last_name', 'current_class', 'gender', 'parent_phone')
-    search_fields = ('student_id', 'first_name', 'last_name')
-    list_filter = ('gender', 'current_class')
-
-@admin.register(SubjectResult)
-class SubjectResultAdmin(admin.ModelAdmin):
-    list_display = ('student', 'subject_name', 'class_score', 'exam_score', 'total_score', 'grade')
-    search_fields = ('student__student_id', 'student__first_name', 'student__last_name', 'subject_name')
-    list_filter = ('subject_name', 'grade')
+@admin.register(StudentProfile)
+class StudentProfileAdmin(admin.ModelAdmin):
+    list_display = ('student_id', 'user', 'current_class', 'guardian_contact')
+    search_fields = ('student_id', 'user__username', 'user__first_name', 'user__last_name')
