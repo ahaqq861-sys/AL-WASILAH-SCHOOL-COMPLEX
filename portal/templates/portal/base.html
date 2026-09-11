@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AL-WASILAH SCHOOL COMPLEX - Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-wine: #722F37;
+            --dark-wine: #4A1F24;
+            --accent-gold: #D4AF37;
+        }
+        .bg-wine { background-color: var(--primary-wine); }
+        .bg-wine-dark { background-color: var(--dark-wine); }
+        .text-wine { color: var(--primary-wine); }
+        .border-wine { border-color: var(--primary-wine); }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-wine text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-white text-wine flex items-center justify-center font-bold text-xl shadow">
+                    A
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">AL-WASILAH SCHOOL COMPLEX</h1>
+                    <p class="text-xs text-yellow-200">Excellence in Knowledge & Character</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4 text-sm">
+                {% if request.user.is_authenticated %}
+                <span class="hidden md:inline-block bg-wine-dark px-3 py-1 rounded-full text-xs font-semibold">
+                    Logged in as: {{ request.user.username }}
+                </span>
+                <a href="{% url 'logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded transition duration-200 text-xs font-medium">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+        {% block content %}
+        <!-- Page content gets injected here -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-wine-dark text-gray-300 text-xs py-4 text-center border-t border-red-900 mt-auto">
+        <p>&copy; 2026 AL-WASILAH SCHOOL COMPLEX. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
