@@ -1,17 +1,28 @@
-<div class="card-grid">
-    <div class="card">
-        <h4>Terminal Assessment</h4>
-        <p>View latest subject grades and term continuous reports.</p>
-        <a href="{% url 'student_assessment' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">View Report Cards &rarr;</a>
-    </div>
-    <div class="card">
-        <h4>Class Schedule</h4>
-        <p>Check daily timetables and assigned subject teachers.</p>
-        <a href="{% url 'student_schedule' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">View Timetable &rarr;</a>
-    </div>
-    <div class="card">
-        <h4>Attendance Record</h4>
-        <p>Track your academic attendance record for the term.</p>
-        <a href="{% url 'student_attendance' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color }}; font-weight:bold;">Check Attendance &rarr;</a>
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="dashboard-container" style="padding: 20px;">
+    <h2>Student Portal</h2>
+    <p>Welcome back, {{ student.user.get_full_name|default:student.user.username }}</p>
+
+    <div class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+        <div class="card" style="border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; background-color: #ffffff;">
+            <h4>Terminal Assessment</h4>
+            <p>View latest subject grades and term continuous reports.</p>
+            <a href="{% url 'student_assessment' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color|default:'#800020' }}; font-weight:bold;">View Report Cards &rarr;</a>
+        </div>
+        
+        <div class="card" style="border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; background-color: #ffffff;">
+            <h4>Class Schedule</h4>
+            <p>Check daily timetables and assigned subject teachers.</p>
+            <a href="{% url 'student_schedule' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color|default:'#800020' }}; font-weight:bold;">View Timetable &rarr;</a>
+        </div>
+        
+        <div class="card" style="border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; background-color: #ffffff;">
+            <h4>Attendance Record</h4>
+            <p>Track your academic attendance record for the term.</p>
+            <a href="{% url 'student_attendance' %}" style="display:inline-block; margin-top:10px; color:{{ branding.primary_color|default:'#800020' }}; font-weight:bold;">Check Attendance &rarr;</a>
+        </div>
     </div>
 </div>
+{% endblock %}
