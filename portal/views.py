@@ -8,13 +8,14 @@ from .models import SchoolBranding
 
 
 def get_branding():
-    """Safely retrieves or creates default school branding without throwing IntegrityError."""
+    """Safely retrieves or creates default school branding with all required fields."""
     branding, _ = SchoolBranding.objects.get_or_create(
         id=1,
         defaults={
             "school_name": "Al-Wasilah School Complex",
             "tagline": "Knowledge and Virtue",
             "primary_color": "#800020",
+            "secondary_color": "#1A252C",
         },
     )
     return branding
