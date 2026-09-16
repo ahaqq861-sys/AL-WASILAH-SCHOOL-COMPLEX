@@ -1,7 +1,95 @@
-new_user = User.objects.create_user(
-    username=username,
-    password=temp_password,
-    first_name=first_name,
-    last_name=last_name,
-    is_active=True  # Ensure account is active
-)
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="container" style="padding: 20px;">
+    <h2>Manage Students</h2>
+
+    <!-- Display Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 10px; margin-bottom: 15px; border-radius: 5px; {% if message.tags == 'error' %}background-color: #f8d7da; color: #721c24;{% else %}background-color: #d4edda; color: #155724;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Display Generated Credentials Card -->
+    {% if generated_credentials %}
+        <div style="background-color: #e2e3e5; border: 1px solid #d6d8db; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h4 style="margin-top:0; color: #383d41;">Account Credentials Generated</h4>
+            <p style="margin: 5px 0;"><strong>Name:</strong> {{ generated_credentials.name }}</p>
+            <p style="margin: 5px 0;"><strong>Username / Student ID:</strong> {{ generated_credentials.username }}</p>
+            <p style="margin: 5px 0;"><strong>Temporary Password:</strong> <code style="background:#fff; padding:2px 6px; border-radius:3px; font-weight:bold;">{{ generated_credentials.password }}</code></p>
+            <p style="margin-top:5px; font-size:12px; color:#6c757d;">Provide these login credentials to the student.</p>
+        </div>
+    {% endif %}
+
+    <!-- Register New Student Form -->
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+        <h3>Register New Student</h3>
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 10px;">
+                <div>
+                    <label>First Name:</label>
+                    <input type="text" name="first_name" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Last Name:</label>
+                    <input type="text" name="last_name" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Student ID / Username:</label>
+                    <input type="text" name="student_id" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Current Class:</label>
+                    <input type="text" name="current_class" required placeholder="e.g. Basic 7" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Guardian Contact:</label>
+                    <input type="text" name="guardian_contact" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+            <button type="submit" name="create_student" style="margin-top: 15px; padding: 10px 20px; background-color: {{ branding.primary_color|default:'#800020' }}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Create Student Account
+            </button>
+        </form>
+    </div>
+
+    <!-- Registered Students Table -->
+    <h3>Student Directory</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+        <thead>
+            <tr style="background-color: #f1f1f1; text-align: left;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Student ID</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Full Name</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Class</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Guardian Contact</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ student.student_id }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ student.user.get_full_name|default:student.user.username }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ student.current_class }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ student.guardian_contact|default:"N/A" }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">
+                    {% if student.user.is_active %}
+                        <span style="color: green; font-weight: bold;">Active</span>
+                    {% else %}
+                        <span style="color: red; font-weight: bold;">Inactive</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="padding: 10px; border: 1px solid #ddd; text-align: center;">No student profiles registered yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
