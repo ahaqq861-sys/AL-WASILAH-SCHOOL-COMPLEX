@@ -77,6 +77,15 @@ def change_password(request):
     )
 
 
+@login_required
+def manage_students(request):
+    return render(
+        request,
+        "portal/manage_students.html",
+        {"branding": get_branding()},
+    )
+
+
 def custom_logout(request):
     logout(request)
     return redirect("login")
