@@ -1,22 +1,34 @@
 from django.contrib import admin
-from .models import SchoolBranding, TeacherProfile, StudentProfile
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.models import User
+from .models import StudentProfile, TeacherProfile, SchoolBranding
 
-@admin.register(SchoolBranding)
-class SchoolBrandingAdmin(admin.ModelAdmin):
-    list_display = ('school_name', 'phone_number', 'email_address', 'primary_color')
-    
-    def has_add_permission(self, request):
-        # Prevent creating multiple config rows
-        if self.model.objects.exists():
-            return False
-        return super().has_add_permission(request)
 
-@admin.register(TeacherProfile)
-class TeacherProfileAdmin(admin.ModelAdmin):
-    list_display = ('employee_id', 'user', 'assigned_class', 'subject_specialization')
-    search_fields = ('employee_id', 'user__username', 'user__first_name', 'user__last_name')
+class StudentProfileInline(admin.StackedInline):
+    model = StudentProfile
+    can_delete = False
+    verbose_name_plural = 'Student Profile'
+    extra = 0
 
-@admin.register(StudentProfile)
-class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ('student_id', 'user', 'current_class', 'guardian_contact')
-    search_fields = ('student_id', 'user__username', 'user__first_name', 'user__last_name')
+
+class TeacherProfileInline(admin.StackedInline):
+    model = TeacherProfile
+    can_delete = False
+    verbose_name_plural = 'Teacher Profile'
+    extra = 0
+
+
+class UserAdmin(BaseUserAdmin):
+    inlines = (StudentProfileInline, TeacherProfileInline)
+
+
+# Re-register User model with inlines
+try:
+    admin.site.unregister(User)
+except admin.sites.NotRegistered:
+    pass
+
+admin.site.register(User, UserAdmin)
+admin.site.register(StudentProfile)
+admin.site.register(TeacherProfile)
+admin.site.register(SchoolBranding)

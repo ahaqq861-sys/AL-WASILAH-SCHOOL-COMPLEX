@@ -4,7 +4,6 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from .models import StudentProfile, TeacherProfile, SchoolBranding
 
@@ -25,22 +24,21 @@ def custom_login(request):
         branding = None
     
     if request.method == 'POST':
-        # Clean username input manually to enforce lowercase and strip spaces
-        post_data = request.POST.copy()
-        if 'username' in post_data:
-            post_data['username'] = post_data['username'].strip().lower()
+        username_input = request.POST.get('username', '').strip().lower()
+        password_input = request.POST.get('password', '').strip()
 
-        form = AuthenticationForm(request, data=post_data)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('dashboard')
+        user = authenticate(request, username=username_input, password=password_input)
+
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                return redirect('dashboard')
+            else:
+                messages.error(request, "This account is inactive. Please contact the administrator.")
         else:
             messages.error(request, "Invalid username or password.")
-    else:
-        form = AuthenticationForm()
-
-    return render(request, 'portal/login.html', {'form': form, 'branding': branding})
+            
+    return render(request, 'portal/login.html', {'branding': branding})
 
 
 def custom_logout(request):
@@ -55,6 +53,30 @@ def dashboard(request):
         branding = SchoolBranding.get_config()
     except Exception:
         branding = None
+
+    user = request.user
+
+    # 1. Superuser / Staff Admin View
+    if user.is_superuser or user.is_staff:
+        return render(request, 'portal/admin_dashboard.html', {'branding': branding})
+
+    # 2. Student View
+    student_profile = StudentProfile.objects.filter(user=user).first()
+    if student_profile:
+        return render(request, 'portal/student_dashboard.html', {
+            'branding': branding,
+            'student': student_profile
+        })
+
+    # 3. Teacher View
+    teacher_profile = TeacherProfile.objects.filter(user=user).first()
+    if teacher_profile:
+        return render(request, 'portal/teacher_dashboard.html', {
+            'branding': branding,
+            'teacher': teacher_profile
+        })
+
+    # 4. Default Fallback
     return render(request, 'portal/dashboard.html', {'branding': branding})
 
 
