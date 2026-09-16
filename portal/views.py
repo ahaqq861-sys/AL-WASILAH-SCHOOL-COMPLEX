@@ -1,190 +1,128 @@
-import secrets
+import random
 import string
 from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from .models import StudentProfile, TeacherProfile, SchoolBranding
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
+from django.contrib.auth.models import User
+from django.contrib import messages
+from .models import UserProfile, SchoolBranding
 
-
-def generate_temp_password(length=10):
-    """Generates a secure temporary password."""
-    alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
-
+def get_branding():
+    return SchoolBranding.objects.first() or SchoolBranding.objects.create()
 
 def custom_login(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
-        
-    try:
-        branding = SchoolBranding.get_config()
-    except Exception:
-        branding = None
-    
+
     if request.method == 'POST':
-        username_input = request.POST.get('username', '').strip().lower()
-        password_input = request.POST.get('password', '').strip()
-
-        user = authenticate(request, username=username_input, password=password_input)
-
-        if user is not None:
-            if user.is_active:
-                login(request, user)
-                return redirect('dashboard')
-            else:
-                messages.error(request, "This account is inactive. Please contact the administrator.")
-        else:
-            messages.error(request, "Invalid username or password.")
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
             
-    return render(request, 'portal/login.html', {'branding': branding})
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            if profile.must_change_password:
+                return redirect('change_password')
+            return redirect('dashboard')
+    else:
+        form = AuthenticationForm()
 
+    return render(request, 'portal/login.html', {'form': form, 'branding': get_branding()})
 
+@login_required
 def custom_logout(request):
-    """Logs out the current user and redirects to the login page."""
     logout(request)
     return redirect('login')
 
+@login_required
+def change_password(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            profile.must_change_password = False
+            profile.save()
+            messages.success(request, 'Your password was successfully updated!')
+            return redirect('dashboard')
+    else:
+        form = PasswordChangeForm(request.user)
+        
+    return render(request, 'portal/change_password.html', {
+        'form': form,
+        'branding': get_branding(),
+        'profile': profile
+    })
 
 @login_required
 def dashboard(request):
-    try:
-        branding = SchoolBranding.get_config()
-    except Exception:
-        branding = None
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if profile.must_change_password:
+        return redirect('change_password')
 
-    user = request.user
+    context = {
+        'branding': get_branding(),
+        'profile': profile
+    }
 
-    # 1. Superuser / Staff Admin View
-    if user.is_superuser or user.is_staff:
-        return render(request, 'portal/admin_dashboard.html', {'branding': branding})
-
-    # 2. Student View
-    student_profile = StudentProfile.objects.filter(user=user).first()
-    if student_profile:
-        return render(request, 'portal/student_dashboard.html', {
-            'branding': branding,
-            'student': student_profile
-        })
-
-    # 3. Teacher View
-    teacher_profile = TeacherProfile.objects.filter(user=user).first()
-    if teacher_profile:
-        return render(request, 'portal/teacher_dashboard.html', {
-            'branding': branding,
-            'teacher': teacher_profile
-        })
-
-    # 4. Default Fallback
-    return render(request, 'portal/dashboard.html', {'branding': branding})
-
+    if profile.role == 'admin' or request.user.is_superuser:
+        return render(request, 'portal/admin_dashboard.html', context)
+    elif profile.role == 'teacher':
+        return render(request, 'portal/teacher_dashboard.html', context)
+    else:
+        return render(request, 'portal/student_dashboard.html', context)
 
 @login_required
 def manage_students(request):
-    try:
-        branding = SchoolBranding.get_config()
-    except Exception:
-        branding = None
-
-    generated_credentials = None
-
     if request.method == 'POST' and 'create_student' in request.POST:
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
         student_id = request.POST.get('student_id', '').strip()
         current_class = request.POST.get('current_class', '').strip()
         guardian_contact = request.POST.get('guardian_contact', '').strip()
+        temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
-        username = student_id.lower()
-        if User.objects.filter(username=username).exists():
-            messages.error(request, f"A student account with ID/Username '{username}' already exists.")
+        if User.objects.filter(username=student_id).exists():
+            messages.error(request, f"Student ID '{student_id}' already exists.")
         else:
-            temp_password = generate_temp_password()
-            new_user = User.objects.create_user(
-                username=username,
-                password=temp_password,
-                first_name=first_name,
-                last_name=last_name,
-                is_active=True
-            )
-            StudentProfile.objects.create(
-                user=new_user,
-                student_id=student_id,
-                current_class=current_class,
-                guardian_contact=guardian_contact
-            )
-            generated_credentials = {
-                'role': 'Student',
-                'name': f"{first_name} {last_name}",
-                'username': username,
-                'password': temp_password,
-            }
-            messages.success(request, f"Student account created for {first_name} {last_name}!")
+            user = User.objects.create_user(username=student_id, password=temp_pass, first_name=first_name, last_name=last_name)
+            UserProfile.objects.create(user=user, role='student', student_id=student_id, current_class=current_class, guardian_contact=guardian_contact, must_change_password=True)
+            messages.success(request, f"Student created. Temp password: {temp_pass}")
+            return redirect('manage_students')
 
-    try:
-        students = StudentProfile.objects.select_related('user').all().order_by('current_class', 'user__first_name')
-    except Exception:
-        students = []
-
-    context = {
-        'branding': branding,
-        'students': students,
-        'generated_credentials': generated_credentials,
-    }
-    return render(request, 'portal/manage_students.html', context)
-
+    students = UserProfile.objects.filter(role='student')
+    return render(request, 'portal/manage_students.html', {'students': students, 'branding': get_branding()})
 
 @login_required
 def manage_teachers(request):
-    try:
-        branding = SchoolBranding.get_config()
-    except Exception:
-        branding = None
-
-    generated_credentials = None
-
     if request.method == 'POST' and 'create_teacher' in request.POST:
         first_name = request.POST.get('first_name', '').strip()
         last_name = request.POST.get('last_name', '').strip()
-        employee_id = request.POST.get('employee_id', '').strip()
-        subject_assigned = request.POST.get('subject_assigned', '').strip()
-        phone_number = request.POST.get('phone_number', '').strip()
+        username = request.POST.get('username', '').strip()
+        subject = request.POST.get('subject', '').strip()
+        temp_pass = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
-        username = employee_id.lower()
         if User.objects.filter(username=username).exists():
-            messages.error(request, f"A teacher account with Staff ID/Username '{username}' already exists.")
+            messages.error(request, f"Teacher username '{username}' already exists.")
         else:
-            temp_password = generate_temp_password()
-            new_user = User.objects.create_user(
-                username=username,
-                password=temp_password,
-                first_name=first_name,
-                last_name=last_name,
-                is_active=True
-            )
-            TeacherProfile.objects.create(
-                user=new_user,
-                employee_id=employee_id,
-                subject_assigned=subject_assigned,
-                phone_number=phone_number
-            )
-            generated_credentials = {
-                'role': 'Teacher',
-                'name': f"{first_name} {last_name}",
-                'username': username,
-                'password': temp_password,
-            }
-            messages.success(request, f"Teacher account created for {first_name} {last_name}!")
+            user = User.objects.create_user(username=username, password=temp_pass, first_name=first_name, last_name=last_name)
+            UserProfile.objects.create(user=user, role='teacher', subject_assigned=subject, must_change_password=True)
+            messages.success(request, f"Teacher account created. Temp password: {temp_pass}")
+            return redirect('manage_teachers')
 
-    try:
-        teachers = TeacherProfile.objects.select_related('user').all().order_by('user__first_name')
-    except Exception:
-        teachers = []
+    teachers = UserProfile.objects.filter(role='teacher')
+    return render(request, 'portal/manage_teachers.html', {'teachers': teachers, 'branding': get_branding()})
 
-    context = {
-        'branding': branding,
-        'teachers': teachers,
-        'generated_credentials': generated_credentials,
-    }
-    return render(request, 'portal/manage_teachers.html', context)
+@login_required
+def student_assessment(request):
+    return render(request, 'portal/student_assessment.html', {'branding': get_branding()})
+
+@login_required
+def student_schedule(request):
+    return render(request, 'portal/student_schedule.html', {'branding': get_branding()})
+
+@login_required
+def student_attendance(request):
+    return render(request, 'portal/student_attendance.html', {'branding': get_branding()})

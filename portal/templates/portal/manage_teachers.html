@@ -1,7 +1,67 @@
-new_user = User.objects.create_user(
-    username=username,
-    password=temp_password,
-    first_name=first_name,
-    last_name=last_name,
-    is_active=True  # Ensure account is active
-)
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Manage Teacher & Staff Accounts</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 10px; margin-bottom: 15px; border-radius: 5px; background-color: #d4edda; color: #155724;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div style="background-color: #ffffff; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
+        <h3>Register New Teacher</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 10px;">
+                <div>
+                    <label>First Name:</label>
+                    <input type="text" name="first_name" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Last Name:</label>
+                    <input type="text" name="last_name" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Username:</label>
+                    <input type="text" name="username" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div>
+                    <label>Assigned Subject:</label>
+                    <input type="text" name="subject" required style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+            <button type="submit" name="create_teacher" style="margin-top: 15px; padding: 10px 20px; background-color: {{ branding.primary_color|default:'#800020' }}; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Create Teacher Account
+            </button>
+        </form>
+    </div>
+
+    <h3>Teacher Directory</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 10px; background: white;">
+        <thead>
+            <tr style="background-color: #f1f1f1; text-align: left;">
+                <th style="padding: 10px; border: 1px solid #ddd;">Username</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Full Name</th>
+                <th style="padding: 10px; border: 1px solid #ddd;">Assigned Subject</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teacher in teachers %}
+            <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ teacher.user.username }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ teacher.user.get_full_name }}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">{{ teacher.subject_assigned|default:"N/A" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" style="padding: 10px; border: 1px solid #ddd; text-align: center;">No teachers registered yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

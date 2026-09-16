@@ -4,12 +4,15 @@ from . import views
 urlpatterns = [
     path('', views.custom_login, name='login'),
     path('logout/', views.custom_logout, name='logout'),
+    path('change-password/', views.change_password, name='change_password'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('students/', views.manage_students, name='manage_students'),
-    path('teachers/', views.manage_teachers, name='manage_teachers'),
     
-    # Student Navigation Routes
-    path('assessment/', views.dashboard, name='student_assessment'),
-    path('schedule/', views.dashboard, name='student_schedule'),
-    path('attendance/', views.dashboard, name='student_attendance'),
+    # Admin Routes
+    path('manage-students/', views.manage_students, name='manage_students'),
+    path('manage-teachers/', views.manage_teachers, name='manage_teachers'),
+    
+    # Student Routes
+    path('assessment/', views.student_assessment, name='student_assessment'),
+    path('schedule/', views.student_schedule, name='student_schedule'),
+    path('attendance/', views.student_attendance, name='student_attendance'),
 ]
