@@ -113,6 +113,15 @@ def student_schedule(request):
     )
 
 
+@login_required
+def student_attendance(request):
+    return render(
+        request,
+        "portal/student_attendance.html",
+        {"branding": get_branding()},
+    )
+
+
 def custom_logout(request):
     logout(request)
     return redirect("login")
