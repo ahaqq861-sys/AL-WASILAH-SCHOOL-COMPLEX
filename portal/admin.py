@@ -1,34 +1,12 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
-from .models import StudentProfile, TeacherProfile, SchoolBranding
+from .models import UserProfile, SchoolBranding
 
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'student_id', 'current_class', 'subject_assigned', 'must_change_password')
+    list_filter = ('role', 'must_change_password')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'student_id')
 
-class StudentProfileInline(admin.StackedInline):
-    model = StudentProfile
-    can_delete = False
-    verbose_name_plural = 'Student Profile'
-    extra = 0
-
-
-class TeacherProfileInline(admin.StackedInline):
-    model = TeacherProfile
-    can_delete = False
-    verbose_name_plural = 'Teacher Profile'
-    extra = 0
-
-
-class UserAdmin(BaseUserAdmin):
-    inlines = (StudentProfileInline, TeacherProfileInline)
-
-
-# Re-register User model with inlines
-try:
-    admin.site.unregister(User)
-except admin.sites.NotRegistered:
-    pass
-
-admin.site.register(User, UserAdmin)
-admin.site.register(StudentProfile)
-admin.site.register(TeacherProfile)
-admin.site.register(SchoolBranding)
+@admin.register(SchoolBranding)
+class SchoolBrandingAdmin(admin.ModelAdmin):
+    list_display = ('school_name', 'primary_color')
