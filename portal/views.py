@@ -104,6 +104,15 @@ def student_assessment(request):
     )
 
 
+@login_required
+def student_schedule(request):
+    return render(
+        request,
+        "portal/student_schedule.html",
+        {"branding": get_branding()},
+    )
+
+
 def custom_logout(request):
     logout(request)
     return redirect("login")
