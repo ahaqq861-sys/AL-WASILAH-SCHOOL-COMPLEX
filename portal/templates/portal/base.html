@@ -1,26 +1,19 @@
-{% extends "portal/base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ branding.school_name|default:"Al-Wasilah School Complex" }}{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen text-gray-900 antialiased">
 
-{% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
-    <!-- Logo & Branding Header -->
-    <div class="text-center">
-      {% if branding.logo %}
-        <img src="{{ branding.logo.url }}" alt="{{ branding.school_name }} Logo" class="h-20 w-auto mx-auto mb-3">
-      {% endif %}
-      <h2 class="text-3xl font-extrabold text-gray-900">{{ branding.school_name|default:"Portal Login" }}</h2>
-    </div>
+    <!-- Main Content Container -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
 
-    <!-- Login Form -->
-    <form class="mt-8 space-y-6" method="POST">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <div>
-        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          Sign In
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-{% endblock %}
+</body>
+</html>
