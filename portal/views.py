@@ -86,6 +86,15 @@ def manage_students(request):
     )
 
 
+@login_required
+def manage_teachers(request):
+    return render(
+        request,
+        "portal/manage_teachers.html",
+        {"branding": get_branding()},
+    )
+
+
 def custom_logout(request):
     logout(request)
     return redirect("login")
