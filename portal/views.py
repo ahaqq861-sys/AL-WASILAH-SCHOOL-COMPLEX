@@ -95,6 +95,15 @@ def manage_teachers(request):
     )
 
 
+@login_required
+def student_assessment(request):
+    return render(
+        request,
+        "portal/student_assessment.html",
+        {"branding": get_branding()},
+    )
+
+
 def custom_logout(request):
     logout(request)
     return redirect("login")
