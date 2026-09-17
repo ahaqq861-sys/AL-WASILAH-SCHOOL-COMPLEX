@@ -1,12 +1,16 @@
-{% extends 'base.html' %}
+{% extends 'portal/base.html' %}
 {% block content %}
-<h2>Fee Administration</h2>
-<table class="table table-hover mt-3">
-  <thead><tr><th>Student</th><th>Amount Paid</th><th>Total Fee</th><th>Balance</th></tr></thead>
-  <tbody>
-    {% for p in payments %}
-    <tr><td>{{ p.student.username }}</td><td>GH₵ {{ p.amount_paid }}</td><td>GH₵ {{ p.total_fee }}</td><td>GH₵ {{ p.balance }}</td></tr>
-    {% empty %}<tr><td colspan="4">No fee payments recorded.</td></tr>{% endfor %}
-  </tbody>
-</table>
+<h3 class="mb-3">Fee Administration</h3>
+<div class="card shadow">
+  <div class="card-body">
+    <table class="table table-hover">
+      <thead><tr><th>Student</th><th>Amount Paid</th><th>Total Fee</th><th>Balance</th></tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr><td>{{ p.student.username }}</td><td>GH₵ {{ p.amount_paid }}</td><td>GH₵ {{ p.total_fee }}</td><td>GH₵ {{ p.balance }}</td></tr>
+        {% empty %}<tr><td colspan="4">No fee payments recorded.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}
