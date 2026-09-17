@@ -3,17 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ branding.school_name|default:"Al-Wasilah School Complex" }}{% endblock %}</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen text-gray-900 antialiased">
+    <title>{{ branding.school_name|default:"Al-Wasilah School Complex" }}</title>
+    
+    <!-- Bootstrap 4.6 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-    <!-- Main Content Container -->
-    <main>
+    <style>
+        .navbar-custom {
+            background-color: {{ branding.primary_color|default:"#800020" }} !important;
+        }
+        .nav-link-custom {
+            color: rgba(255, 255, 255, 0.85) !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            margin-right: 2px;
+            border-radius: 4px;
+        }
+        .nav-link-custom:hover {
+            color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <!-- TOP NAVIGATION BAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm mb-4">
+        <a class="navbar-brand font-weight-bold mr-4" href="/portal/">
+            {{ branding.school_name|default:"Al-Wasilah School Complex" }}
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#portalNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="portalNavbar">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="/portal/">
+                        <i class="fas fa-tachometer-alt mr-1"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="/portal/grades/">
+                        <i class="fas fa-check-square mr-1"></i> Gradebook
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="/portal/students/">
+                        <i class="fas fa-users mr-1"></i> Students
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="/portal/fees/">
+                        <i class="fas fa-receipt mr-1"></i> Fee Administration
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-link-custom" href="/portal/branding/">
+                        <i class="fas fa-cog mr-1"></i> Branding Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="navbar-nav ml-auto align-items-center">
+                <span class="badge badge-light px-2 py-1 mr-2 text-uppercase">{{ role|default:"ADMIN" }}</span>
+                <span class="text-white font-weight-bold mr-3">{{ request.user.username }}</span>
+                <a class="btn btn-outline-light btn-sm" href="/portal/logout/">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN PAGE CONTAINER -->
+    <div class="container-fluid px-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% block content %}
         {% endblock %}
-    </main>
+    </div>
+
+    <!-- Bootstrap JS Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
