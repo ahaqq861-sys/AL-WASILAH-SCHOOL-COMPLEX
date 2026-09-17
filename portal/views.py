@@ -7,8 +7,7 @@ from django.contrib.auth.models import User
 from .models import UserProfile, StudentGrade, FeePayment, SchoolBranding
 
 def get_user_role(user):
-    """Safely fetch user role without raising AttributeError."""
-    profile, created = UserProfile.objects.get_or_create(
+    profile, _ = UserProfile.objects.get_or_create(
         user=user,
         defaults={'role': 'admin' if user.is_superuser else 'student'}
     )
@@ -38,7 +37,6 @@ def custom_logout(request):
 def portal_dashboard(request):
     role = get_user_role(request.user)
     context = {'role': role}
-
     if role == 'admin':
         context['profiles'] = UserProfile.objects.all()
         context['grades'] = StudentGrade.objects.all().order_by('-date_recorded')[:10]
@@ -48,52 +46,50 @@ def portal_dashboard(request):
     elif role == 'student':
         context['grades'] = StudentGrade.objects.filter(student=request.user)
         context['payments'] = FeePayment.objects.filter(student=request.user)
-
     return render(request, 'portal/dashboard.html', context)
 
 @login_required
 def student_grades(request):
     role = get_user_role(request.user)
-    if role == 'student':
-        grades = StudentGrade.objects.filter(student=request.user)
-    else:
-        grades = StudentGrade.objects.all()
-    return render(request, 'portal/grades.html', {'grades': grades})
+    grades = StudentGrade.objects.filter(student=request.user) if role == 'student' else StudentGrade.objects.all()
+    return render(request, 'portal/grades.html', {'grades': grades, 'role': role})
+
+@login_required
+def manage_students(request):
+    role = get_user_role(request.user)
+    students = UserProfile.objects.all() if role in ['admin', 'teacher'] else UserProfile.objects.filter(user=request.user)
+    return render(request, 'portal/students.html', {'students': students, 'role': role})
 
 @login_required
 def fee_statement(request):
     role = get_user_role(request.user)
-    if role == 'student':
-        payments = FeePayment.objects.filter(student=request.user)
-    else:
-        payments = FeePayment.objects.all()
-    return render(request, 'portal/fees.html', {'payments': payments})
+    payments = FeePayment.objects.filter(student=request.user) if role == 'student' else FeePayment.objects.all()
+    return render(request, 'portal/fees.html', {'payments': payments, 'role': role})
+
+@login_required
+def branding_settings(request):
+    branding, _ = SchoolBranding.objects.get_or_create(id=1)
+    if request.method == 'POST':
+        branding.school_name = request.POST.get('school_name', branding.school_name)
+        branding.primary_color = request.POST.get('primary_color', branding.primary_color)
+        branding.secondary_color = request.POST.get('secondary_color', branding.secondary_color)
+        branding.tagline = request.POST.get('tagline', branding.tagline)
+        branding.save()
+        messages.success(request, 'Branding updated successfully!')
+        return redirect('branding_settings')
+    return render(request, 'portal/branding.html', {'branding': branding})
 
 @login_required
 def print_student_report(request, student_id=None):
     role = get_user_role(request.user)
-    if student_id and role in ['admin', 'teacher']:
-        target_student = get_object_or_404(User, id=student_id)
-    else:
-        target_student = request.user
-
+    target_student = get_object_or_404(User, id=student_id) if student_id and role in ['admin', 'teacher'] else request.user
     grades = StudentGrade.objects.filter(student=target_student)
     payments = FeePayment.objects.filter(student=target_student)
-    
-    return render(request, 'portal/print_report.html', {
-        'target_student': target_student,
-        'grades': grades,
-        'payments': payments
-    })
+    return render(request, 'portal/print_report.html', {'target_student': target_student, 'grades': grades, 'payments': payments})
 
 @login_required
 def print_fee_receipt(request, payment_id):
     payment = get_object_or_404(FeePayment, id=payment_id)
-    role = get_user_role(request.user)
-    if role == 'student' and payment.student != request.user:
-        messages.error(request, 'Unauthorized access to receipt.')
-        return redirect('fee_statement')
-        
     return render(request, 'portal/print_receipt.html', {'payment': payment})
 
 @login_required
@@ -103,11 +99,8 @@ def change_password(request):
         if form.is_valid():
             user = form.save()
             update_session_auth_hash(request, user)
-            messages.success(request, 'Your password was successfully updated!')
+            messages.success(request, 'Your password was updated!')
             return redirect('portal_dashboard')
-        else:
-            messages.error(request, 'Please correct the errors below.')
     else:
         form = PasswordChangeForm(request.user)
-
     return render(request, 'portal/change_password.html', {'form': form})

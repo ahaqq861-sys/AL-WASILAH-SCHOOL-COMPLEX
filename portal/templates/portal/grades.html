@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Gradebook</h2>
+<table class="table table-bordered mt-3">
+  <thead><tr><th>Student</th><th>Subject</th><th>Term</th><th>Score</th></tr></thead>
+  <tbody>
+    {% for g in grades %}
+    <tr><td>{{ g.student.username }}</td><td>{{ g.subject }}</td><td>{{ g.term }}</td><td>{{ g.score }}</td></tr>
+    {% empty %}<tr><td colspan="4">No grades recorded yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}
