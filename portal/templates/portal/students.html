@@ -10,54 +10,72 @@
     {% endfor %}
   {% endif %}
 
-  {% if role == 'admin' %}
-  <!-- Admin: Create New User / Student Form -->
+  {% if role == 'admin' or role == 'teacher' %}
+  <!-- Register New Student / User Account Form -->
   <div class="card shadow mb-4">
     <div class="card-header bg-primary text-white">
-      <h5 class="m-0"><i class="fas fa-user-plus mr-2"></i>Register New Account</h5>
+      <h5 class="m-0"><i class="fas fa-user-plus mr-2"></i>Register New Student / User</h5>
     </div>
     <div class="card-body">
-      <form method="POST">
+      <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="form-row">
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-3">
             <label class="font-weight-bold">Username</label>
-            <input type="text" name="username" class="form-control" required placeholder="Enter username">
+            <input type="text" name="username" class="form-control" required placeholder="e.g. john_doe">
           </div>
-          <div class="form-group col-md-4">
-            <label class="font-weight-bold">Email Address</label>
-            <input type="email" name="email" class="form-control" placeholder="user@school.com">
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">First Name</label>
+            <input type="text" name="first_name" class="form-control" placeholder="First Name">
           </div>
-          <div class="form-group col-md-4">
-            <label class="font-weight-bold">Role</label>
-            <select name="role" class="form-control" id="roleSelect">
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Last Name</label>
+            <input type="text" name="last_name" class="form-control" placeholder="Last Name">
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Account Role</label>
+            <select name="role" class="form-control">
               <option value="student" selected>Student</option>
               <option value="teacher">Teacher</option>
-              <option value="admin">Admin</option>
+              {% if role == 'admin' %}<option value="admin">Admin</option>{% endif %}
             </select>
           </div>
         </div>
-        
-        <div class="form-group form-check" id="brandingPermCheck" style="display: none;">
-          <input type="checkbox" name="can_edit_branding" class="form-check-input" id="canBrand">
-          <label class="form-check-label text-danger font-weight-bold" for="canBrand">
-            Authorize this Teacher to edit School Branding & Logo
-          </label>
+
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Sex</label>
+            <select name="sex" class="form-control">
+              <option value="">Select Sex</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Date of Birth</label>
+            <input type="date" name="date_of_birth" class="form-control">
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Phone Number</label>
+            <input type="text" name="phone" class="form-control" placeholder="+233 ...">
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Passport Photo</label>
+            <input type="file" name="passport_photo" class="form-control-file" accept="image/*">
+          </div>
         </div>
 
         <button type="submit" class="btn btn-success font-weight-bold px-4">
-          <i class="fas fa-check mr-1"></i> Register Account
+          <i class="fas fa-save mr-1"></i> Save Student Profile
         </button>
       </form>
     </div>
   </div>
   {% endif %}
 
-  <!-- Student & User Directory List -->
+  <!-- Student Directory Table -->
   <div class="card shadow">
-    <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
-      <h5 class="m-0"><i class="fas fa-users mr-2"></i>Student & User Profiles Directory</h5>
-    </div>
+    <div class="card-header bg-dark text-white"><h5 class="m-0"><i class="fas fa-users mr-2"></i>Student & User Directory</h5></div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover table-striped m-0 align-middle">
@@ -70,7 +88,7 @@
               <th>Sex</th>
               <th>Date of Birth</th>
               <th>Phone</th>
-              <th>Branding Access</th>
+              {% if role in 'admin teacher' %}<th>Actions</th>{% endif %}
             </tr>
           </thead>
           <tbody>
@@ -85,32 +103,75 @@
                   </div>
                 {% endif %}
               </td>
-              <td class="font-weight-bold">
-                {{ u.first_name|default:'' }} {{ u.last_name|default:'' }}
-                {% if not u.first_name and not u.last_name %}
-                  <span class="text-muted font-italic">Not set</span>
-                {% endif %}
-              </td>
+              <td class="font-weight-bold">{{ u.first_name|default:'' }} {{ u.last_name|default:'' }}</td>
               <td>@{{ u.user.username }}</td>
-              <td>
-                <span class="badge {% if u.role == 'admin' %}badge-danger{% elif u.role == 'teacher' %}badge-warning{% else %}badge-info{% endif %} text-uppercase">
-                  {{ u.role }}
-                </span>
-              </td>
+              <td><span class="badge badge-info text-uppercase">{{ u.role }}</span></td>
               <td>{{ u.sex|default:'-'|capfirst }}</td>
               <td>{{ u.date_of_birth|date:'Y-m-d'|default:'-' }}</td>
               <td>{{ u.phone|default:'-' }}</td>
+              {% if role in 'admin teacher' %}
               <td>
-                {% if u.role == 'admin' or u.can_edit_branding %}
-                  <span class="badge badge-success"><i class="fas fa-check-circle"></i> Allowed</span>
-                {% else %}
-                  <span class="badge badge-secondary"><i class="fas fa-times-circle"></i> No Access</span>
-                {% endif %}
+                <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal{{ u.id }}">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
               </td>
+              {% endif %}
             </tr>
+
+            <!-- Edit Student Modal -->
+            <div class="modal fade" id="editModal{{ u.id }}" tabindex="-1">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Edit Profile: @{{ u.user.username }}</h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                  </div>
+                  <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ u.id }}">
+                    <div class="modal-body">
+                      <div class="form-row">
+                        <div class="form-group col-md-6">
+                          <label>First Name</label>
+                          <input type="text" name="first_name" class="form-control" value="{{ u.first_name|default:'' }}">
+                        </div>
+                        <div class="form-group col-md-6">
+                          <label>Last Name</label>
+                          <input type="text" name="last_name" class="form-control" value="{{ u.last_name|default:'' }}">
+                        </div>
+                      </div>
+                      <div class="form-row">
+                        <div class="form-group col-md-4">
+                          <label>Sex</label>
+                          <select name="sex" class="form-control">
+                            <option value="male" {% if u.sex == 'male' %}selected{% endif %}>Male</option>
+                            <option value="female" {% if u.sex == 'female' %}selected{% endif %}>Female</option>
+                          </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                          <label>Date of Birth</label>
+                          <input type="date" name="date_of_birth" class="form-control" value="{{ u.date_of_birth|date:'Y-m-d' }}">
+                        </div>
+                        <div class="form-group col-md-4">
+                          <label>Phone Number</label>
+                          <input type="text" name="phone" class="form-control" value="{{ u.phone|default:'' }}">
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label>Update Passport Photo</label>
+                        <input type="file" name="passport_photo" class="form-control-file" accept="image/*">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="submit" class="btn btn-success">Save Changes</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
             {% empty %}
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No student profiles found.</td>
+              <td colspan="8" class="text-center py-4 text-muted">No student records found.</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -119,15 +180,4 @@
     </div>
   </div>
 </div>
-
-<script>
-  document.getElementById('roleSelect')?.addEventListener('change', function() {
-    const brandingCheck = document.getElementById('brandingPermCheck');
-    if (this.value === 'teacher') {
-      brandingCheck.style.display = 'block';
-    } else {
-      brandingCheck.style.display = 'none';
-    }
-  });
-</script>
 {% endblock %}

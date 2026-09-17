@@ -1,16 +1,92 @@
 {% extends 'portal/base.html' %}
 {% block content %}
-<h3 class="mb-3">Gradebook</h3>
-<div class="card shadow">
-  <div class="card-body">
-    <table class="table table-striped">
-      <thead><tr><th>Student</th><th>Subject</th><th>Term</th><th>Score</th></tr></thead>
-      <tbody>
-        {% for g in grades %}
-        <tr><td>{{ g.student.username }}</td><td>{{ g.subject }}</td><td>{{ g.term }}</td><td>{{ g.score }}</td></tr>
-        {% empty %}<tr><td colspan="4">No grades recorded yet.</td></tr>{% endfor %}
-      </tbody>
-    </table>
+<div class="container my-4">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if role == 'admin' or role == 'teacher' %}
+  <!-- Teacher/Admin Grade Entry Form -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="m-0"><i class="fas fa-pen-nib mr-2"></i>Record Student Subject Results</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Select Student</label>
+            <select name="student_id" class="form-control" required>
+              <option value="">-- Choose Student --</option>
+              {% for s in students %}
+                <option value="{{ s.user.id }}">{{ s.first_name }} {{ s.last_name }} (@{{ s.user.username }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Subject</label>
+            <input type="text" name="subject" class="form-control" required placeholder="e.g. Mathematics">
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Score (%)</label>
+            <input type="number" step="0.01" name="score" class="form-control" required placeholder="e.g. 85.5">
+          </div>
+          <div class="form-group col-md-3">
+            <label class="font-weight-bold">Term / Academic Session</label>
+            <input type="text" name="term" class="form-control" value="Term 1" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-success font-weight-bold px-4">
+          <i class="fas fa-upload mr-1"></i> Upload Grade Result
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Student Grade Results Table -->
+  <div class="card shadow">
+    <div class="card-header bg-dark text-white">
+      <h5 class="m-0"><i class="fas fa-graduation-cap mr-2"></i>Academic Grade Results</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped m-0">
+          <thead class="thead-light">
+            <tr>
+              {% if role in 'admin teacher' %}<th>Student Name</th>{% endif %}
+              <th>Subject</th>
+              <th>Score (%)</th>
+              <th>Term</th>
+              <th>Date Recorded</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for g in grades %}
+            <tr>
+              {% if role in 'admin teacher' %}
+                <td class="font-weight-bold">{{ g.student.userprofile.first_name }} {{ g.student.userprofile.last_name }} (@{{ g.student.username }})</td>
+              {% endif %}
+              <td>{{ g.subject }}</td>
+              <td><span class="badge badge-success font-weight-bold">{{ g.score }}%</span></td>
+              <td>{{ g.term }}</td>
+              <td>{{ g.date_recorded|date:'M d, Y' }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">No academic grades recorded.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
