@@ -1,84 +1,99 @@
-{% extends 'portal/base.html' %}
-
-{% block content %}
-<div class="space-y-6">
-
-    <!-- UDS Style Profile Summary Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div class="flex items-center space-x-4">
-            <div class="w-16 h-16 rounded-full bg-wine/10 text-wine border border-wine/20 flex items-center justify-center font-bold text-2xl">
-                <i class="fas fa-user-graduate"></i>
-            </div>
-            <div>
-                <h2 class="text-xl font-bold text-gray-900">{{ request.user.get_full_name|default:request.user.username }}</h2>
-                <p class="text-xs font-semibold text-amber-700 uppercase tracking-wide">
-                    {% if request.user.is_superuser %}System Administrator
-                    {% elif request.user.teacher_profile %}Academic Staff / Instructor
-                    {% else %}Enrolled Student{% endif %}
-                </p>
-                <p class="text-xs text-gray-500 mt-0.5">Academic Session: 2025/2026 | Term 1</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ branding.school_name }} - Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .navbar-wine { background-color: {{ branding.primary_color|default:"#800020" }}; }
+        .bg-wine { background-color: {{ branding.primary_color|default:"#800020" }} !important; }
+        .text-wine { color: {{ branding.primary_color|default:"#800020" }} !important; }
+        .nav-link.active { border-bottom: 2px solid #ffffff; }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Main Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-wine shadow-sm">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand fw-bold" href="#">{{ branding.school_name }}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#portalNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="portalNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" href="#"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                    {% if role == 'admin' or role == 'teacher' %}
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-journal-check"></i> Gradebook</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-people"></i> Students</a></li>
+                    {% endif %}
+                    {% if role == 'admin' %}
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-cash-coin"></i> Fee Administration</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#"><i class="bi bi-gear"></i> Branding Settings</a></li>
+                    {% endif %}
+                </ul>
+                <div class="d-flex align-items-center text-white me-3">
+                    <span class="badge bg-light text-wine me-2">{{ role|upper }}</span>
+                    <span>{{ request.user.get_full_name|default:request.user.username }}</span>
+                </div>
+                <a href="{% url 'portal_logout' %}" class="btn btn-outline-light btn-sm">Logout</a>
             </div>
         </div>
-        <div class="bg-amber-50 border border-amber-200 rounded-md px-4 py-2 text-center text-xs text-amber-800">
-            <span class="block font-bold">Portal Status</span>
-            <span class="inline-block mt-0.5 bg-green-600 text-white font-bold px-2 py-0.5 rounded text-[10px] uppercase">Active</span>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container py-4">
+        <div class="row g-4">
+            <!-- Summary Widgets -->
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-danger">
+                    <h6 class="text-muted small text-uppercase">Logged In As</h6>
+                    <h4 class="fw-bold mb-0 text-wine">{{ request.user.username }}</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary">
+                    <h6 class="text-muted small text-uppercase">Role Access</h6>
+                    <h4 class="fw-bold mb-0">{{ role|title }} Mode</h4>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-3 border-start border-4 border-success">
+                    <h6 class="text-muted small text-uppercase">School System</h6>
+                    <h4 class="fw-bold mb-0 text-truncate">{{ branding.school_name }}</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Specific Functionality Tables -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0 text-wine"><i class="bi bi-table me-2"></i> Portal Management & Records</h5>
+            </div>
+            <div class="card-body">
+                {% if role == 'student' %}
+                    <h6>Academic Performance</h6>
+                    <table class="table table-hover mt-3">
+                        <thead class="table-light">
+                            <tr><th>Subject</th><th>Term</th><th>Score</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in grades %}
+                            <tr><td>{{ grade.subject }}</td><td>{{ grade.term }}</td><td>{{ grade.score }}</td></tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted">No grade records found.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <h6>System Overview</h6>
+                    <p class="text-muted">Use the navigation menu above to manage grades, fee payments, and branding preferences.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <!-- Role-Based Dashboard Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        
-        <!-- Card 1 -->
-        <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-200 border-t-4 border-t-wine hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase">Directory</p>
-                    <h3 class="text-base font-bold text-gray-800 mt-1">Student Management</h3>
-                </div>
-                <div class="p-3 bg-wine/10 text-wine rounded-lg">
-                    <i class="fas fa-users text-xl"></i>
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-3">Access profile information and academic status.</p>
-            <a href="{% url 'manage_students' %}" class="inline-block mt-4 text-xs font-bold text-wine hover:underline">
-                Open Directory &rarr;
-            </a>
-        </div>
-
-        <!-- Card 2 -->
-        <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-200 border-t-4 border-t-amber-500 hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase">Academic Performance</p>
-                    <h3 class="text-base font-bold text-gray-800 mt-1">Terminal Reports</h3>
-                </div>
-                <div class="p-3 bg-amber-500/10 text-amber-600 rounded-lg">
-                    <i class="fas fa-file-alt text-xl"></i>
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-3">View class grades, exam scores, and cumulative averages.</p>
-            <a href="#" class="inline-block mt-4 text-xs font-bold text-amber-600 hover:underline">
-                View Reports &rarr;
-            </a>
-        </div>
-
-        <!-- Card 3 -->
-        <div class="bg-white rounded-lg p-5 shadow-sm border border-gray-200 border-t-4 border-t-blue-600 hover:shadow-md transition">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase">Schedules</p>
-                    <h3 class="text-base font-bold text-gray-800 mt-1">Class Timetable</h3>
-                </div>
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                    <i class="fas fa-calendar-check text-xl"></i>
-                </div>
-            </div>
-            <p class="text-xs text-gray-500 mt-3">Check weekly timetable slots and subject allocations.</p>
-            <a href="#" class="inline-block mt-4 text-xs font-bold text-blue-600 hover:underline">
-                Check Schedule &rarr;
-            </a>
-        </div>
-
-    </div>
-</div>
-{% endblock %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

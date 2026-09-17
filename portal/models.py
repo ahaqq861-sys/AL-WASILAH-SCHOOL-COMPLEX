@@ -1,52 +1,51 @@
-from django.contrib.auth.models import User
 from django.db import models
-
+from django.contrib.auth.models import User
 
 class SchoolBranding(models.Model):
-    school_name = models.CharField(
-        max_length=255, default="Al-Wasilah School Complex"
-    )
-    tagline = models.CharField(
-        max_length=255, default="Knowledge and Virtue", blank=True, null=True
-    )
-    logo = models.ImageField(upload_to="branding/logos/", blank=True, null=True)
-    primary_color = models.CharField(max_length=7, default="#800020")
+    school_name = models.CharField(max_length=200, default="Al-Wasilah School Complex")
+    tagline = models.CharField(max_length=255, default="Knowledge and Virtue")
+    logo = models.ImageField(upload_to="branding/", blank=True, null=True)
+    primary_color = models.CharField(max_length=7, default="#800020")  # Wine
     secondary_color = models.CharField(max_length=7, default="#1A252C")
-
-    # Contact Details
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    email_address = models.EmailField(blank=True, null=True)
-    address = models.TextField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, default="+233 00 000 0000")
+    email_address = models.EmailField(blank=True, default="info@alwasilah.edu")
+    address = models.TextField(blank=True, default="Ghana")
 
     def __str__(self):
         return self.school_name
 
-
-class TeacherProfile(models.Model):
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="teacher_profile"
+class UserProfile(models.Model):
+    ROLE_CHOICES = (
+        ('admin', 'Administrator'),
+        ('teacher', 'Teacher'),
+        ('student', 'Student'),
     )
-    staff_id = models.CharField(max_length=50, unique=True)
-    subject_specialization = models.CharField(
-        max_length=100, blank=True, null=True
-    )
-    profile_picture = models.ImageField(
-        upload_to="profiles/teachers/", blank=True, null=True
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
+    phone = models.CharField(max_length=20, blank=True)
 
     def __str__(self):
-        return f"Teacher: {self.user.get_full_name() or self.user.username}"
+        return f"{self.user.username} ({self.get_role_display()})"
 
-
-class StudentProfile(models.Model):
-    user = models.OneToOneField(
-        User, on_delete=models.CASCADE, related_name="student_profile"
-    )
-    student_id = models.CharField(max_length=50, unique=True)
-    grade_level = models.CharField(max_length=50, blank=True, null=True)
-    profile_picture = models.ImageField(
-        upload_to="profiles/students/", blank=True, null=True
-    )
+class StudentGrade(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='grades')
+    subject = models.CharField(max_length=100)
+    score = models.DecimalField(max_digits=5, decimal_places=2)
+    term = models.CharField(max_length=50, default="Term 1")
+    date_recorded = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f"Student: {self.user.get_full_name() or self.user.username}"
+        return f"{self.student.username} - {self.subject}: {self.score}"
+
+class FeePayment(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fee_payments')
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    total_fee = models.DecimalField(max_digits=10, decimal_places=2)
+    date_paid = models.DateField(auto_now_add=True)
+
+    @property
+    def balance(self):
+        return self.total_fee - self.amount_paid
+
+    def __str__(self):
+        return f"{self.student.username} - Paid: {self.amount_paid}"

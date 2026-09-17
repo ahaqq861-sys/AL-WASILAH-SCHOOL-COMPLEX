@@ -1,26 +1,70 @@
-{% extends "portal/base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ branding.school_name }} - Portal Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            border: none;
+            overflow: hidden;
+        }
+        .login-header {
+            background-color: {{ branding.primary_color|default:"#800020" }};
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .btn-wine {
+            background-color: {{ branding.primary_color|default:"#800020" }};
+            color: #ffffff;
+            font-weight: 600;
+            border: none;
+        }
+        .btn-wine:hover {
+            background-color: #600018;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="card login-card">
+        <div class="login-header">
+            <h3 class="fw-bold mb-1">{{ branding.school_name }}</h3>
+            <p class="small mb-0 opacity-75">{{ branding.tagline }}</p>
+        </div>
+        <div class="card-body p-4">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-danger py-2 small">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
 
-{% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
-    <!-- Logo & Branding Header -->
-    <div class="text-center">
-      {% if branding.logo %}
-        <img src="{{ branding.logo.url }}" alt="{{ branding.school_name }} Logo" class="h-20 w-auto mx-auto mb-3">
-      {% endif %}
-      <h2 class="text-3xl font-extrabold text-gray-900">{{ branding.school_name|default:"Portal Login" }}</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Username</label>
+                    <input type="text" name="username" class="form-control" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-wine w-100 py-2 mt-2">Sign In to Portal</button>
+            </form>
+        </div>
     </div>
-
-    <!-- Login Form -->
-    <form class="mt-8 space-y-6" method="POST">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <div>
-        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          Sign In
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
-{% endblock %}
+</body>
+</html>
