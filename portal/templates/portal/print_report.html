@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Academic Report - {{ target_student.get_full_name|default:target_student.username }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+        .header { text-align: center; border-bottom: 2px solid #800020; padding-bottom: 10px; margin-bottom: 20px; }
+        .header h1 { color: #800020; margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #800020; color: white; }
+        .no-print { margin-bottom: 20px; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()" style="background:#800020; color:white; padding:10px 20px; border:none; cursor:pointer;">Print / Save as PDF</button>
+        <a href="{% url 'portal_dashboard' %}" style="margin-left:15px; text-decoration:none; color:#333;">Back to Dashboard</a>
+    </div>
+
+    <div class="header">
+        <h1>Al-Wasilah School Complex</h1>
+        <p>Official Academic Statement & Terminal Report</p>
+    </div>
+
+    <h3>Student Details</h3>
+    <p><strong>Name:</strong> {{ target_student.get_full_name|default:target_student.username }}</p>
+    <p><strong>Username/ID:</strong> {{ target_student.username }}</p>
+
+    <h3>Academic Performance</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Score</th>
+                <th>Term</th>
+                <th>Date Recorded</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for grade in grades %}
+            <tr>
+                <td>{{ grade.subject }}</td>
+                <td>{{ grade.score }}</td>
+                <td>{{ grade.term }}</td>
+                <td>{{ grade.date_recorded|date:"Y-m-d" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4">No grades recorded yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
