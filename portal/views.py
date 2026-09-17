@@ -37,7 +37,7 @@ def custom_login(request):
 
 def custom_logout(request):
     logout(request)
-    return redirect('portal_logout')
+    return redirect('portal_login')
 
 @login_required
 def first_time_password_change(request):
@@ -51,6 +51,8 @@ def first_time_password_change(request):
             profile.save()
             messages.success(request, 'Password updated successfully! Welcome to your portal.')
             return redirect('portal_dashboard')
+        else:
+            messages.error(request, 'Please fix the errors below.')
     else:
         form = PasswordChangeForm(request.user)
 
@@ -129,12 +131,13 @@ def manage_students(request):
 def branding_settings(request):
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     
-    # Strict Permission Check: Only Admin OR Authorized Teacher
+    # Access restricted to Admin or authorized Teacher
     if profile.role == 'student' or (profile.role == 'teacher' and not profile.can_edit_branding):
         messages.error(request, 'Access Denied: You do not have authorization to edit school branding.')
         return redirect('portal_dashboard')
 
     branding, _ = SchoolBranding.objects.get_or_create(id=1)
+    
     if request.method == 'POST':
         branding.school_name = request.POST.get('school_name', branding.school_name)
         branding.tagline = request.POST.get('tagline', branding.tagline)
@@ -144,11 +147,12 @@ def branding_settings(request):
         branding.email_address = request.POST.get('email_address', branding.email_address)
         branding.address = request.POST.get('address', branding.address)
         
+        # Handle logo file uploads via request.FILES
         if 'logo' in request.FILES:
             branding.logo = request.FILES['logo']
             
         branding.save()
-        messages.success(request, 'School branding & contact details updated successfully!')
+        messages.success(request, 'School logo, contacts, and branding updated permanently!')
         return redirect('branding_settings')
 
     return render(request, 'portal/branding.html', {'branding': branding})
