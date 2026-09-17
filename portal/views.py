@@ -6,6 +6,14 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from .models import UserProfile, StudentGrade, FeePayment, SchoolBranding
 
+def get_user_role(user):
+    """Safely fetch user role without raising AttributeError."""
+    profile, created = UserProfile.objects.get_or_create(
+        user=user,
+        defaults={'role': 'admin' if user.is_superuser else 'student'}
+    )
+    return profile.role
+
 def custom_login(request):
     if request.user.is_authenticated:
         return redirect('portal_dashboard')
@@ -28,12 +36,7 @@ def custom_logout(request):
 
 @login_required
 def portal_dashboard(request):
-    try:
-        profile = request.user.userprofile
-        role = profile.role
-    except UserProfile.DoesNotExist:
-        role = 'student'
-
+    role = get_user_role(request.user)
     context = {'role': role}
 
     if role == 'admin':
@@ -50,7 +53,8 @@ def portal_dashboard(request):
 
 @login_required
 def student_grades(request):
-    if request.user.userprofile.role == 'student':
+    role = get_user_role(request.user)
+    if role == 'student':
         grades = StudentGrade.objects.filter(student=request.user)
     else:
         grades = StudentGrade.objects.all()
@@ -58,7 +62,8 @@ def student_grades(request):
 
 @login_required
 def fee_statement(request):
-    if request.user.userprofile.role == 'student':
+    role = get_user_role(request.user)
+    if role == 'student':
         payments = FeePayment.objects.filter(student=request.user)
     else:
         payments = FeePayment.objects.all()
@@ -66,7 +71,8 @@ def fee_statement(request):
 
 @login_required
 def print_student_report(request, student_id=None):
-    if student_id and request.user.userprofile.role in ['admin', 'teacher']:
+    role = get_user_role(request.user)
+    if student_id and role in ['admin', 'teacher']:
         target_student = get_object_or_404(User, id=student_id)
     else:
         target_student = request.user
@@ -83,7 +89,8 @@ def print_student_report(request, student_id=None):
 @login_required
 def print_fee_receipt(request, payment_id):
     payment = get_object_or_404(FeePayment, id=payment_id)
-    if request.user.userprofile.role == 'student' and payment.student != request.user:
+    role = get_user_role(request.user)
+    if role == 'student' and payment.student != request.user:
         messages.error(request, 'Unauthorized access to receipt.')
         return redirect('fee_statement')
         
