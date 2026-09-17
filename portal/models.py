@@ -20,7 +20,8 @@ class UserProfile(models.Model):
 class SchoolBranding(models.Model):
     school_name = models.CharField(max_length=255, default='Al-Wasilah School Complex')
     primary_color = models.CharField(max_length=20, default='#800020')
-    tagline = models.CharField(max_length=255, default='Excellence in Education')
+    secondary_color = models.CharField(max_length=20, default='#1A252C')
+    tagline = models.CharField(max_length=255, default='Knowledge and Virtue')
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     email_address = models.EmailField(blank=True, null=True)
 
@@ -50,7 +51,6 @@ class FeePayment(models.Model):
     def __str__(self):
         return f"{self.student.username} - Paid: {self.amount_paid}"
 
-# Signal to automatically create UserProfile on User creation
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
