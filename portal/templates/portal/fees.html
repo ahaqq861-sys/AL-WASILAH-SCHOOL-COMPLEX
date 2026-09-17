@@ -1,88 +1,76 @@
 {% extends 'portal/base.html' %}
 {% block content %}
-<div class="container my-4">
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-        {{ message }}
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-      </div>
-    {% endfor %}
-  {% endif %}
+<div class="alert font-weight-bold py-2 bg-wine text-white">
+  <i class="fas fa-info-circle mr-1"></i> Student Ledger & Billing Statement
+</div>
+
+<div class="paper-sheet">
+  <div class="text-center font-weight-bold mb-3" style="color: #722f37;">
+    <h4 class="m-0">{{ branding.school_name|default:"School Name" }}</h4>
+    <small class="text-muted">STUDENT FINANCIAL LEDGER</small>
+  </div>
+
+  <table class="table table-sm table-bordered bg-light mb-4" style="font-size: 13px;">
+    <tr><th width="25%">STUDENT NAME</th><td>{{ user.userprofile.first_name }} {{ user.userprofile.last_name }}</td></tr>
+    <tr><th>INDEX / USERNAME</th><td>{{ user.username }}</td></tr>
+    <tr><th>CONTACT PHONE</th><td>{{ user.userprofile.phone|default:'-' }}</td></tr>
+  </table>
 
   {% if role == 'admin' or role == 'teacher' %}
-  <!-- Admin/Teacher Fee Recording Form -->
-  <div class="card shadow mb-4">
-    <div class="card-header bg-primary text-white">
-      <h5 class="m-0"><i class="fas fa-file-invoice-dollar mr-2"></i>Record Student Fee Payment</h5>
-    </div>
-    <div class="card-body">
+  <div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-wine text-white py-2"><h6 class="m-0">Record Student Payment</h6></div>
+    <div class="card-body p-3">
       <form method="POST">
         {% csrf_token %}
         <div class="form-row">
-          <div class="form-group col-md-4">
-            <label class="font-weight-bold">Select Student</label>
-            <select name="student_id" class="form-control" required>
-              <option value="">-- Choose Student --</option>
+          <div class="form-group col-md-3 m-0">
+            <select name="student_id" class="form-control form-control-sm" required>
+              <option value="">-- Select Student --</option>
               {% for s in students %}
                 <option value="{{ s.user.id }}">{{ s.first_name }} {{ s.last_name }} (@{{ s.user.username }})</option>
               {% endfor %}
             </select>
           </div>
-          <div class="form-group col-md-4">
-            <label class="font-weight-bold">Amount Paid (GHS)</label>
-            <input type="number" step="0.01" name="amount_paid" class="form-control" required placeholder="0.00">
+          <div class="form-group col-md-3 m-0">
+            <input type="number" step="0.01" name="amount_paid" class="form-control form-control-sm" placeholder="Amount Paid (GHS)" required>
           </div>
-          <div class="form-group col-md-4">
-            <label class="font-weight-bold">Total Bill / Term Fee (GHS)</label>
-            <input type="number" step="0.01" name="total_fee" class="form-control" required placeholder="0.00">
+          <div class="form-group col-md-3 m-0">
+            <input type="number" step="0.01" name="total_fee" class="form-control form-control-sm" placeholder="Total Bill (GHS)" required>
+          </div>
+          <div class="form-group col-md-3 m-0">
+            <button type="submit" class="btn btn-sm btn-wine btn-block"><i class="fas fa-plus"></i> Submit Record</button>
           </div>
         </div>
-        <button type="submit" class="btn btn-success font-weight-bold px-4">
-          <i class="fas fa-plus-circle mr-1"></i> Submit Payment Record
-        </button>
       </form>
     </div>
   </div>
   {% endif %}
 
-  <!-- Student Fee Ledger Table -->
-  <div class="card shadow">
-    <div class="card-header bg-dark text-white">
-      <h5 class="m-0"><i class="fas fa-receipt mr-2"></i>Fee Payment Ledger</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-striped m-0">
-          <thead class="thead-light">
-            <tr>
-              {% if role in 'admin teacher' %}<th>Student Name</th>{% endif %}
-              <th>Total Term Fee</th>
-              <th>Amount Paid</th>
-              <th>Outstanding Balance</th>
-              <th>Date Paid</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in payments %}
-            <tr>
-              {% if role in 'admin teacher' %}
-                <td class="font-weight-bold">{{ p.student.userprofile.first_name }} {{ p.student.userprofile.last_name }} (@{{ p.student.username }})</td>
-              {% endif %}
-              <td>GHS {{ p.total_fee }}</td>
-              <td class="text-success font-weight-bold">GHS {{ p.amount_paid }}</td>
-              <td class="{% if p.balance > 0 %}text-danger{% else %}text-success{% endif %} font-weight-bold">GHS {{ p.balance }}</td>
-              <td>{{ p.date_paid|date:'M d, Y' }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" class="text-center py-4 text-muted">No fee records found.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <table class="table table-sm table-striped table-bordered" style="font-size: 12px;">
+    <thead class="bg-wine text-white">
+      <tr>
+        <th>Date</th>
+        <th>Total Fee Bill</th>
+        <th>Amount Paid</th>
+        <th>Remaining Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in payments %}
+      <tr>
+        <td>{{ p.date_paid|date:'d-M-Y' }}</td>
+        <td>GHS {{ p.total_fee }}</td>
+        <td class="text-success font-weight-bold">GHS {{ p.amount_paid }}</td>
+        <td class="{% if p.balance > 0 %}text-danger{% else %}text-success{% endif %} font-weight-bold">GHS {{ p.balance }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center py-3 text-muted">No fee records uploaded.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="mt-4 pt-3 border-top text-right">
+    <button onclick="window.print()" class="btn btn-sm btn-wine px-4"><i class="fas fa-print mr-1"></i> Print Receipt</button>
   </div>
 </div>
 {% endblock %}

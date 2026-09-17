@@ -1,92 +1,94 @@
 {% extends 'portal/base.html' %}
 {% block content %}
-<div class="container my-4">
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-        {{ message }}
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
+<div class="paper-sheet">
+  <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+    {% if branding.logo %}
+      <img src="{{ branding.logo.url }}" alt="Logo" style="height: 65px; object-fit: contain;">
+    {% else %}
+      <div class="bg-wine text-white rounded p-2"><i class="fas fa-school fa-2x"></i></div>
+    {% endif %}
+    
+    <div class="institution-header m-0">
+      <h4 class="m-0 font-weight-bold">{{ branding.school_name|default:"School Name" }}</h4>
+      <small class="text-muted font-weight-bold">STATEMENT OF ACADEMIC RESULTS</small>
+    </div>
+    
+    {% if user.userprofile.passport_photo %}
+      <img src="{{ user.userprofile.passport_photo.url }}" class="rounded-circle" style="width: 65px; height: 65px; object-fit: cover;">
+    {% else %}
+      <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 65px; height: 65px;">
+        <i class="fas fa-user"></i>
       </div>
-    {% endfor %}
-  {% endif %}
+    {% endif %}
+  </div>
+
+  <table class="table table-sm table-borderless bg-light mb-4" style="font-size: 13px;">
+    <tr>
+      <td><strong>Index No:</strong> {{ user.username }}</td>
+      <td><strong>Name:</strong> {{ user.userprofile.first_name }} {{ user.userprofile.last_name }}</td>
+      <td><strong>Gender:</strong> {{ user.userprofile.sex|default:'-'|upper }}</td>
+      <td><strong>Phone:</strong> {{ user.userprofile.phone|default:'-' }}</td>
+    </tr>
+  </table>
 
   {% if role == 'admin' or role == 'teacher' %}
-  <!-- Teacher/Admin Grade Entry Form -->
-  <div class="card shadow mb-4">
-    <div class="card-header bg-primary text-white">
-      <h5 class="m-0"><i class="fas fa-pen-nib mr-2"></i>Record Student Subject Results</h5>
-    </div>
-    <div class="card-body">
+  <div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header bg-wine text-white py-2"><h6 class="m-0">Upload Student Result</h6></div>
+    <div class="card-body p-3">
       <form method="POST">
         {% csrf_token %}
         <div class="form-row">
-          <div class="form-group col-md-3">
-            <label class="font-weight-bold">Select Student</label>
-            <select name="student_id" class="form-control" required>
-              <option value="">-- Choose Student --</option>
+          <div class="form-group col-md-3 m-0">
+            <select name="student_id" class="form-control form-control-sm" required>
+              <option value="">-- Select Student --</option>
               {% for s in students %}
                 <option value="{{ s.user.id }}">{{ s.first_name }} {{ s.last_name }} (@{{ s.user.username }})</option>
               {% endfor %}
             </select>
           </div>
-          <div class="form-group col-md-3">
-            <label class="font-weight-bold">Subject</label>
-            <input type="text" name="subject" class="form-control" required placeholder="e.g. Mathematics">
+          <div class="form-group col-md-3 m-0">
+            <input type="text" name="subject" class="form-control form-control-sm" placeholder="Subject / Course" required>
           </div>
-          <div class="form-group col-md-3">
-            <label class="font-weight-bold">Score (%)</label>
-            <input type="number" step="0.01" name="score" class="form-control" required placeholder="e.g. 85.5">
+          <div class="form-group col-md-2 m-0">
+            <input type="number" step="0.01" name="score" class="form-control form-control-sm" placeholder="Score (%)" required>
           </div>
-          <div class="form-group col-md-3">
-            <label class="font-weight-bold">Term / Academic Session</label>
-            <input type="text" name="term" class="form-control" value="Term 1" required>
+          <div class="form-group col-md-2 m-0">
+            <input type="text" name="term" class="form-control form-control-sm" value="Term 1" required>
+          </div>
+          <div class="form-group col-md-2 m-0">
+            <button type="submit" class="btn btn-sm btn-wine btn-block"><i class="fas fa-upload"></i> Post Grade</button>
           </div>
         </div>
-        <button type="submit" class="btn btn-success font-weight-bold px-4">
-          <i class="fas fa-upload mr-1"></i> Upload Grade Result
-        </button>
       </form>
     </div>
   </div>
   {% endif %}
 
-  <!-- Student Grade Results Table -->
-  <div class="card shadow">
-    <div class="card-header bg-dark text-white">
-      <h5 class="m-0"><i class="fas fa-graduation-cap mr-2"></i>Academic Grade Results</h5>
-    </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover table-striped m-0">
-          <thead class="thead-light">
-            <tr>
-              {% if role in 'admin teacher' %}<th>Student Name</th>{% endif %}
-              <th>Subject</th>
-              <th>Score (%)</th>
-              <th>Term</th>
-              <th>Date Recorded</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for g in grades %}
-            <tr>
-              {% if role in 'admin teacher' %}
-                <td class="font-weight-bold">{{ g.student.userprofile.first_name }} {{ g.student.userprofile.last_name }} (@{{ g.student.username }})</td>
-              {% endif %}
-              <td>{{ g.subject }}</td>
-              <td><span class="badge badge-success font-weight-bold">{{ g.score }}%</span></td>
-              <td>{{ g.term }}</td>
-              <td>{{ g.date_recorded|date:'M d, Y' }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-              <td colspan="5" class="text-center py-4 text-muted">No academic grades recorded.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  <table class="table table-sm table-striped table-bordered">
+    <thead class="bg-wine text-white">
+      <tr>
+        <th>Subject / Course Title</th>
+        <th>Term / Session</th>
+        <th>Score Mark</th>
+        <th>Date Recorded</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for g in grades %}
+      <tr>
+        <td class="font-weight-bold">{{ g.subject }}</td>
+        <td>{{ g.term }}</td>
+        <td><span class="badge badge-secondary py-1 px-2">{{ g.score }}%</span></td>
+        <td>{{ g.date_recorded|date:'d-M-Y' }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="text-center py-3 text-muted">No course results uploaded yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="mt-4 pt-3 border-top text-right">
+    <button onclick="window.print()" class="btn btn-sm btn-wine px-4"><i class="fas fa-print mr-1"></i> Print Statement</button>
   </div>
 </div>
 {% endblock %}
