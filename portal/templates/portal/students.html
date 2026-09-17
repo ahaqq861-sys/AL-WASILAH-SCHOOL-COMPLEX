@@ -1,57 +1,133 @@
 {% extends 'portal/base.html' %}
 {% block content %}
-<h3 class="mb-4">User Management & Directory</h3>
+<div class="container my-4">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endfor %}
+  {% endif %}
 
-{% if role == 'admin' %}
-<div class="card shadow mb-4">
-  <div class="card-header bg-primary text-white"><h5 class="m-0">Register New User (Teacher / Student)</h5></div>
-  <div class="card-body">
-    <form method="POST" class="row">
-      {% csrf_token %}
-      <div class="form-group col-md-3">
-        <label>Username</label>
-        <input type="text" name="username" class="form-control" required placeholder="e.g. john_doe">
+  {% if role == 'admin' %}
+  <!-- Admin: Create New User / Student Form -->
+  <div class="card shadow mb-4">
+    <div class="card-header bg-primary text-white">
+      <h5 class="m-0"><i class="fas fa-user-plus mr-2"></i>Register New Account</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label class="font-weight-bold">Username</label>
+            <input type="text" name="username" class="form-control" required placeholder="Enter username">
+          </div>
+          <div class="form-group col-md-4">
+            <label class="font-weight-bold">Email Address</label>
+            <input type="email" name="email" class="form-control" placeholder="user@school.com">
+          </div>
+          <div class="form-group col-md-4">
+            <label class="font-weight-bold">Role</label>
+            <select name="role" class="form-control" id="roleSelect">
+              <option value="student" selected>Student</option>
+              <option value="teacher">Teacher</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group form-check" id="brandingPermCheck" style="display: none;">
+          <input type="checkbox" name="can_edit_branding" class="form-check-input" id="canBrand">
+          <label class="form-check-label text-danger font-weight-bold" for="canBrand">
+            Authorize this Teacher to edit School Branding & Logo
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-success font-weight-bold px-4">
+          <i class="fas fa-check mr-1"></i> Register Account
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Student & User Directory List -->
+  <div class="card shadow">
+    <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
+      <h5 class="m-0"><i class="fas fa-users mr-2"></i>Student & User Profiles Directory</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped m-0 align-middle">
+          <thead class="thead-light">
+            <tr>
+              <th>Photo</th>
+              <th>Full Name</th>
+              <th>Username</th>
+              <th>Role</th>
+              <th>Sex</th>
+              <th>Date of Birth</th>
+              <th>Phone</th>
+              <th>Branding Access</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td>
+                {% if u.passport_photo %}
+                  <img src="{{ u.passport_photo.url }}" class="rounded-circle" style="width: 45px; height: 45px; object-fit: cover;">
+                {% else %}
+                  <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px; font-size: 18px;">
+                    <i class="fas fa-user"></i>
+                  </div>
+                {% endif %}
+              </td>
+              <td class="font-weight-bold">
+                {{ u.first_name|default:'' }} {{ u.last_name|default:'' }}
+                {% if not u.first_name and not u.last_name %}
+                  <span class="text-muted font-italic">Not set</span>
+                {% endif %}
+              </td>
+              <td>@{{ u.user.username }}</td>
+              <td>
+                <span class="badge {% if u.role == 'admin' %}badge-danger{% elif u.role == 'teacher' %}badge-warning{% else %}badge-info{% endif %} text-uppercase">
+                  {{ u.role }}
+                </span>
+              </td>
+              <td>{{ u.sex|default:'-'|capfirst }}</td>
+              <td>{{ u.date_of_birth|date:'Y-m-d'|default:'-' }}</td>
+              <td>{{ u.phone|default:'-' }}</td>
+              <td>
+                {% if u.role == 'admin' or u.can_edit_branding %}
+                  <span class="badge badge-success"><i class="fas fa-check-circle"></i> Allowed</span>
+                {% else %}
+                  <span class="badge badge-secondary"><i class="fas fa-times-circle"></i> No Access</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No student profiles found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      <div class="form-group col-md-3">
-        <label>Role</label>
-        <select name="role" class="form-control">
-          <option value="student">Student</option>
-          <option value="teacher">Teacher</option>
-        </select>
-      </div>
-      <div class="form-group col-md-3">
-        <label>Email</label>
-        <input type="email" name="email" class="form-control" placeholder="user@school.com">
-      </div>
-      <div class="form-group col-md-3">
-        <label>Phone</label>
-        <input type="text" name="phone" class="form-control" placeholder="0200000000">
-      </div>
-      <div class="col-12 mt-2">
-        <button type="submit" class="btn btn-success"><i class="fas fa-user-plus mr-1"></i> Register Account (Default Pass: 123456)</button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
-{% endif %}
 
-<div class="card shadow">
-  <div class="card-body">
-    <table class="table table-striped">
-      <thead><tr><th>Username</th><th>Role</th><th>Email</th><th>Phone</th></tr></thead>
-      <tbody>
-        {% for u in users %}
-        <tr>
-          <td>{{ u.user.username }}</td>
-          <td><span class="badge badge-info">{{ u.role|upper }}</span></td>
-          <td>{{ u.user.email|default:"N/A" }}</td>
-          <td>{{ u.phone|default:"N/A" }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4">No users found.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+<script>
+  document.getElementById('roleSelect')?.addEventListener('change', function() {
+    const brandingCheck = document.getElementById('brandingPermCheck');
+    if (this.value === 'teacher') {
+      brandingCheck.style.display = 'block';
+    } else {
+      brandingCheck.style.display = 'none';
+    }
+  });
+</script>
 {% endblock %}
