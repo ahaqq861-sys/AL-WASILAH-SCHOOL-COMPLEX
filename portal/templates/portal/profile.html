@@ -1,0 +1,65 @@
+{% extends 'portal/base.html' %}
+{% block content %}
+<div class="container my-4">
+  <div class="row">
+    <div class="col-md-4 text-center">
+      <div class="card shadow p-3 mb-4">
+        {% if profile.passport_photo %}
+          <img src="{{ profile.passport_photo.url }}" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+        {% else %}
+          <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 150px; height: 150px; font-size: 48px;">
+            <i class="fas fa-user"></i>
+          </div>
+        {% endif %}
+        <h4>{{ profile.first_name|default:profile.user.username }} {{ profile.last_name|default:"" }}</h4>
+        <p class="badge badge-info">{{ profile.role|upper }}</p>
+      </div>
+    </div>
+    
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white"><h5 class="m-0">Profile Details</h5></div>
+        <div class="card-body">
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <label>First Name</label>
+                <input type="text" name="first_name" class="form-control" value="{{ profile.first_name|default:'' }}">
+              </div>
+              <div class="form-group col-md-6">
+                <label>Last Name</label>
+                <input type="text" name="last_name" class="form-control" value="{{ profile.last_name|default:'' }}">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group col-md-4">
+                <label>Sex</label>
+                <select name="sex" class="form-control">
+                  <option value="">Select</option>
+                  <option value="male" {% if profile.sex == 'male' %}selected{% endif %}>Male</option>
+                  <option value="female" {% if profile.sex == 'female' %}selected{% endif %}>Female</option>
+                  <option value="other" {% if profile.sex == 'other' %}selected{% endif %}>Other</option>
+                </select>
+              </div>
+              <div class="form-group col-md-4">
+                <label>Date of Birth</label>
+                <input type="date" name="date_of_birth" class="form-control" value="{{ profile.date_of_birth|date:'Y-m-d' }}">
+              </div>
+              <div class="form-group col-md-4">
+                <label>Phone Number</label>
+                <input type="text" name="phone" class="form-control" value="{{ profile.phone|default:'' }}">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Passport Picture / Photo</label>
+              <input type="file" name="passport_photo" class="form-control-file">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Save Profile</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

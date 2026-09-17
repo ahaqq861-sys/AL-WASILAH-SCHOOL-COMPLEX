@@ -37,7 +37,7 @@ def custom_login(request):
 
 def custom_logout(request):
     logout(request)
-    return redirect('portal_login')
+    return redirect('portal_logout')
 
 @login_required
 def first_time_password_change(request):
@@ -51,8 +51,6 @@ def first_time_password_change(request):
             profile.save()
             messages.success(request, 'Password updated successfully! Welcome to your portal.')
             return redirect('portal_dashboard')
-        else:
-            messages.error(request, 'Please fix errors below.')
     else:
         form = PasswordChangeForm(request.user)
 
@@ -77,18 +75,40 @@ def portal_dashboard(request):
     return render(request, 'portal/dashboard.html', context)
 
 @login_required
+def manage_profile(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        profile.first_name = request.POST.get('first_name', profile.first_name)
+        profile.last_name = request.POST.get('last_name', profile.last_name)
+        profile.sex = request.POST.get('sex', profile.sex)
+        profile.phone = request.POST.get('phone', profile.phone)
+        
+        dob = request.POST.get('date_of_birth')
+        if dob:
+            profile.date_of_birth = dob
+            
+        if 'passport_photo' in request.FILES:
+            profile.passport_photo = request.FILES['passport_photo']
+            
+        profile.save()
+        messages.success(request, 'Your profile details have been updated.')
+        return redirect('manage_profile')
+        
+    return render(request, 'portal/profile.html', {'profile': profile})
+
+@login_required
 def manage_students(request):
     if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
         return redirect('first_time_password_change')
 
     role = get_user_role(request.user)
 
-    # Register New Teacher / Student with Default Password '123456'
     if request.method == 'POST' and role == 'admin':
         username = request.POST.get('username')
         email = request.POST.get('email', '')
         user_role = request.POST.get('role', 'student')
-        phone = request.POST.get('phone', '')
+        can_brand = True if request.POST.get('can_edit_branding') == 'on' and user_role == 'teacher' else False
 
         if User.objects.filter(username=username).exists():
             messages.error(request, f"User '{username}' already exists!")
@@ -96,22 +116,46 @@ def manage_students(request):
             new_user = User.objects.create_user(username=username, email=email, password='123456')
             profile, _ = UserProfile.objects.get_or_create(user=new_user)
             profile.role = user_role
-            profile.phone = phone
+            profile.can_edit_branding = can_brand
             profile.is_first_login = True
             profile.save()
-            messages.success(request, f"Registered '{username}' ({user_role.upper()}) with default password '123456'.")
+            messages.success(request, f"Registered '{username}' ({user_role.upper()}). Default password: 123456.")
             return redirect('manage_students')
 
     users = UserProfile.objects.all() if role in ['admin', 'teacher'] else UserProfile.objects.filter(user=request.user)
     return render(request, 'portal/students.html', {'users': users, 'role': role})
 
 @login_required
+def branding_settings(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    
+    # Strict Permission Check: Only Admin OR Authorized Teacher
+    if profile.role == 'student' or (profile.role == 'teacher' and not profile.can_edit_branding):
+        messages.error(request, 'Access Denied: You do not have authorization to edit school branding.')
+        return redirect('portal_dashboard')
+
+    branding, _ = SchoolBranding.objects.get_or_create(id=1)
+    if request.method == 'POST':
+        branding.school_name = request.POST.get('school_name', branding.school_name)
+        branding.tagline = request.POST.get('tagline', branding.tagline)
+        branding.primary_color = request.POST.get('primary_color', branding.primary_color)
+        branding.secondary_color = request.POST.get('secondary_color', branding.secondary_color)
+        branding.phone_number = request.POST.get('phone_number', branding.phone_number)
+        branding.email_address = request.POST.get('email_address', branding.email_address)
+        branding.address = request.POST.get('address', branding.address)
+        
+        if 'logo' in request.FILES:
+            branding.logo = request.FILES['logo']
+            
+        branding.save()
+        messages.success(request, 'School branding & contact details updated successfully!')
+        return redirect('branding_settings')
+
+    return render(request, 'portal/branding.html', {'branding': branding})
+
+@login_required
 def student_grades(request):
-    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
-        return redirect('first_time_password_change')
-
     role = get_user_role(request.user)
-
     if request.method == 'POST' and role in ['admin', 'teacher']:
         student_id = request.POST.get('student_id')
         subject = request.POST.get('subject')
@@ -128,11 +172,7 @@ def student_grades(request):
 
 @login_required
 def fee_statement(request):
-    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
-        return redirect('first_time_password_change')
-
     role = get_user_role(request.user)
-
     if request.method == 'POST' and role == 'admin':
         student_id = request.POST.get('student_id')
         amount_paid = request.POST.get('amount_paid')
@@ -145,35 +185,3 @@ def fee_statement(request):
     payments = FeePayment.objects.filter(student=request.user) if role == 'student' else FeePayment.objects.all()
     students = UserProfile.objects.filter(role='student')
     return render(request, 'portal/fees.html', {'payments': payments, 'role': role, 'students': students})
-
-@login_required
-def branding_settings(request):
-    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
-        return redirect('first_time_password_change')
-
-    branding, _ = SchoolBranding.objects.get_or_create(id=1)
-    if request.method == 'POST' and get_user_role(request.user) == 'admin':
-        branding.school_name = request.POST.get('school_name', branding.school_name)
-        branding.primary_color = request.POST.get('primary_color', branding.primary_color)
-        branding.secondary_color = request.POST.get('secondary_color', branding.secondary_color)
-        branding.tagline = request.POST.get('tagline', branding.tagline)
-        branding.phone_number = request.POST.get('phone_number', branding.phone_number)
-        branding.email_address = request.POST.get('email_address', branding.email_address)
-        branding.save()
-        messages.success(request, 'School branding & contact details updated permanently!')
-        return redirect('branding_settings')
-
-    return render(request, 'portal/branding.html', {'branding': branding})
-
-@login_required
-def change_password(request):
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, 'Password updated successfully!')
-            return redirect('portal_dashboard')
-    else:
-        form = PasswordChangeForm(request.user)
-    return render(request, 'portal/change_password.html', {'form': form})
