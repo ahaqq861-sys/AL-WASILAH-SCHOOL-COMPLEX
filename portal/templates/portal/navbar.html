@@ -22,7 +22,7 @@
   </div>
 
   <div class="navbar-nav ml-auto align-items-center">
-    <span class="badge badge-light mr-2">{{ request.user.userprofile.role|upper }}</span>
+    <span class="badge badge-light mr-2">{{ role|upper }}</span>
     <span class="text-white mr-3">{{ request.user.username }}</span>
     <a class="btn btn-outline-light btn-sm" href="{% url 'portal_logout' %}">Logout</a>
   </div>
