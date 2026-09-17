@@ -1,40 +1,23 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.contrib.auth.models import User
-
-from .models import SchoolBranding, StudentProfile, TeacherProfile
-
-
-class TeacherProfileInline(admin.StackedInline):
-    model = TeacherProfile
-    can_delete = False
-    verbose_name_plural = "Teacher Profile"
-
-
-class StudentProfileInline(admin.StackedInline):
-    model = StudentProfile
-    can_delete = False
-    verbose_name_plural = "Student Profile"
-
-
-class UserAdmin(BaseUserAdmin):
-    inlines = (TeacherProfileInline, StudentProfileInline)
-
-
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
-
+from .models import SchoolBranding, UserProfile, StudentGrade, FeePayment
 
 @admin.register(SchoolBranding)
 class SchoolBrandingAdmin(admin.ModelAdmin):
-    list_display = (
-        "school_name",
-        "phone_number",
-        "email_address",
-        "primary_color",
-    )
+    list_display = ('school_name', 'primary_color', 'phone_number', 'email_address')
 
-    def has_add_permission(self, request):
-        if self.model.objects.exists():
-            return False
-        return super().has_add_permission(request)
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'phone')
+    list_filter = ('role',)
+    search_fields = ('user__username', 'user__first_name', 'user__last_name')
+
+@admin.register(StudentGrade)
+class StudentGradeAdmin(admin.ModelAdmin):
+    list_display = ('student', 'subject', 'score', 'term', 'date_recorded')
+    list_filter = ('term', 'subject')
+    search_fields = ('student__username', 'subject')
+
+@admin.register(FeePayment)
+class FeePaymentAdmin(admin.ModelAdmin):
+    list_display = ('student', 'amount_paid', 'total_fee', 'balance', 'date_paid')
+    search_fields = ('student__username',)
