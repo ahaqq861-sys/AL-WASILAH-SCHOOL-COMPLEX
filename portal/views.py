@@ -60,7 +60,7 @@ def first_time_password_change(request):
 
 @login_required
 def portal_dashboard(request):
-    if request.user.userprofile.is_first_login:
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
         return redirect('first_time_password_change')
 
     role = get_user_role(request.user)
@@ -78,7 +78,7 @@ def portal_dashboard(request):
 
 @login_required
 def manage_students(request):
-    if request.user.userprofile.is_first_login:
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
         return redirect('first_time_password_change')
 
     role = get_user_role(request.user)
@@ -106,8 +106,49 @@ def manage_students(request):
     return render(request, 'portal/students.html', {'users': users, 'role': role})
 
 @login_required
+def student_grades(request):
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
+        return redirect('first_time_password_change')
+
+    role = get_user_role(request.user)
+
+    if request.method == 'POST' and role in ['admin', 'teacher']:
+        student_id = request.POST.get('student_id')
+        subject = request.POST.get('subject')
+        score = request.POST.get('score')
+        term = request.POST.get('term', 'Term 1')
+        student = get_object_or_404(User, id=student_id)
+        StudentGrade.objects.create(student=student, subject=subject, score=score, term=term)
+        messages.success(request, f"Grade recorded for {student.username}.")
+        return redirect('student_grades')
+
+    grades = StudentGrade.objects.filter(student=request.user) if role == 'student' else StudentGrade.objects.all()
+    students = UserProfile.objects.filter(role='student')
+    return render(request, 'portal/grades.html', {'grades': grades, 'role': role, 'students': students})
+
+@login_required
+def fee_statement(request):
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
+        return redirect('first_time_password_change')
+
+    role = get_user_role(request.user)
+
+    if request.method == 'POST' and role == 'admin':
+        student_id = request.POST.get('student_id')
+        amount_paid = request.POST.get('amount_paid')
+        total_fee = request.POST.get('total_fee')
+        student = get_object_or_404(User, id=student_id)
+        FeePayment.objects.create(student=student, amount_paid=amount_paid, total_fee=total_fee)
+        messages.success(request, f"Fee payment recorded for {student.username}.")
+        return redirect('fee_statement')
+
+    payments = FeePayment.objects.filter(student=request.user) if role == 'student' else FeePayment.objects.all()
+    students = UserProfile.objects.filter(role='student')
+    return render(request, 'portal/fees.html', {'payments': payments, 'role': role, 'students': students})
+
+@login_required
 def branding_settings(request):
-    if request.user.userprofile.is_first_login:
+    if hasattr(request.user, 'userprofile') and request.user.userprofile.is_first_login:
         return redirect('first_time_password_change')
 
     branding, _ = SchoolBranding.objects.get_or_create(id=1)
@@ -123,3 +164,16 @@ def branding_settings(request):
         return redirect('branding_settings')
 
     return render(request, 'portal/branding.html', {'branding': branding})
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password updated successfully!')
+            return redirect('portal_dashboard')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'portal/change_password.html', {'form': form})
