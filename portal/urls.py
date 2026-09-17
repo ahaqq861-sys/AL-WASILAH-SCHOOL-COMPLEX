@@ -5,11 +5,10 @@ urlpatterns = [
     path('', views.portal_dashboard, name='portal_dashboard'),
     path('login/', views.custom_login, name='portal_login'),
     path('logout/', views.custom_logout, name='portal_logout'),
+    path('first-time-password/', views.first_time_password_change, name='first_time_password_change'),
     path('grades/', views.student_grades, name='student_grades'),
     path('students/', views.manage_students, name='manage_students'),
     path('fees/', views.fee_statement, name='fee_statement'),
     path('branding/', views.branding_settings, name='branding_settings'),
-    path('report/<int:student_id>/', views.print_student_report, name='print_student_report'),
-    path('receipt/<int:payment_id>/', views.print_fee_receipt, name='print_fee_receipt'),
     path('change-password/', views.change_password, name='change_password'),
 ]
