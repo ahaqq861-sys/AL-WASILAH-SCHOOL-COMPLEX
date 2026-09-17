@@ -1,14 +1,55 @@
 {% extends 'portal/base.html' %}
 {% block content %}
-<h3 class="mb-3">Student Directory</h3>
+<h3 class="mb-4">User Management & Directory</h3>
+
+{% if role == 'admin' %}
+<div class="card shadow mb-4">
+  <div class="card-header bg-primary text-white"><h5 class="m-0">Register New User (Teacher / Student)</h5></div>
+  <div class="card-body">
+    <form method="POST" class="row">
+      {% csrf_token %}
+      <div class="form-group col-md-3">
+        <label>Username</label>
+        <input type="text" name="username" class="form-control" required placeholder="e.g. john_doe">
+      </div>
+      <div class="form-group col-md-3">
+        <label>Role</label>
+        <select name="role" class="form-control">
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+        </select>
+      </div>
+      <div class="form-group col-md-3">
+        <label>Email</label>
+        <input type="email" name="email" class="form-control" placeholder="user@school.com">
+      </div>
+      <div class="form-group col-md-3">
+        <label>Phone</label>
+        <input type="text" name="phone" class="form-control" placeholder="0200000000">
+      </div>
+      <div class="col-12 mt-2">
+        <button type="submit" class="btn btn-success"><i class="fas fa-user-plus mr-1"></i> Register Account (Default Pass: 123456)</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
 <div class="card shadow">
   <div class="card-body">
     <table class="table table-striped">
-      <thead><tr><th>Username</th><th>Role</th><th>Phone</th></tr></thead>
+      <thead><tr><th>Username</th><th>Role</th><th>Email</th><th>Phone</th></tr></thead>
       <tbody>
-        {% for s in students %}
-        <tr><td>{{ s.user.username }}</td><td>{{ s.role }}</td><td>{{ s.phone|default:"N/A" }}</td></tr>
-        {% empty %}<tr><td colspan="3">No student records found.</td></tr>{% endfor %}
+        {% for u in users %}
+        <tr>
+          <td>{{ u.user.username }}</td>
+          <td><span class="badge badge-info">{{ u.role|upper }}</span></td>
+          <td>{{ u.user.email|default:"N/A" }}</td>
+          <td>{{ u.phone|default:"N/A" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">No users found.</td></tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>

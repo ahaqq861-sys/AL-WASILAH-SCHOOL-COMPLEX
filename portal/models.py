@@ -23,8 +23,8 @@ class SchoolBranding(models.Model):
     primary_color = models.CharField(max_length=20, default='#800020')
     secondary_color = models.CharField(max_length=20, default='#1A252C')
     tagline = models.CharField(max_length=255, default='Knowledge and Virtue')
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    email_address = models.EmailField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, default='+233 00 000 0000')
+    email_address = models.EmailField(default='info@alwasilah.edu.gh')
 
     def __str__(self):
         return self.school_name
@@ -36,9 +36,6 @@ class StudentGrade(models.Model):
     term = models.CharField(max_length=50, default='Term 1')
     date_recorded = models.DateField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.student.username} - {self.subject}: {self.score}"
-
 class FeePayment(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fee_payments')
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
@@ -49,14 +46,11 @@ class FeePayment(models.Model):
     def balance(self):
         return self.total_fee - self.amount_paid
 
-    def __str__(self):
-        return f"{self.student.username} - Paid: {self.amount_paid}"
-
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         role = 'admin' if instance.is_superuser else 'student'
-        UserProfile.objects.get_or_create(user=instance, defaults={'role': role, 'is_first_login': False if instance.is_superuser else True})
-    else:
-        if hasattr(instance, 'userprofile'):
-            instance.userprofile.save()
+        UserProfile.objects.get_or_create(
+            user=instance, 
+            defaults={'role': role, 'is_first_login': False if instance.is_superuser else True}
+        )
