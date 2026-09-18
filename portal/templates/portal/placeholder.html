@@ -1,0 +1,17 @@
+{% extends 'portal/base.html' %}
+
+{% block title %}{{ active_tab|title }} | Al-Wasilah School Complex{% endblock %}
+{% block header_title %}{{ active_tab|title }}{% endblock %}
+{% block breadcrumb %}{{ active_tab|title }}{% endblock %}
+
+{% block content %}
+<div class="bg-white p-8 rounded-lg border border-gray-200 shadow-sm text-center">
+    <div class="w-16 h-16 bg-purple-100 text-wine rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+        <i class="fas fa-folder-open"></i>
+    </div>
+    <h2 class="text-xl font-bold text-gray-800">{{ active_tab|title }} Module</h2>
+    <p class="text-gray-500 text-sm mt-2 max-w-md mx-auto">
+        This portal section is initialized and connected to the main menu.
+    </p>
+</div>
+{% endblock %}

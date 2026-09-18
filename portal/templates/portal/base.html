@@ -3,64 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Al-Wasilah School Complex{% endblock %}</title>
+    <title>{% block title %}Al-Wasilah School Complex | Portal{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .bg-wine { background-color: #722F37; }
-        .bg-wine-dark { background-color: #4A1521; }
-        .text-wine { color: #722F37; }
-        .border-wine { border-color: #722F37; }
+        .bg-wine-header { background-color: #581c87; }
+        .bg-wine-sidebar { background-color: #2e1065; }
+        .bg-wine-accent { background-color: #7e22ce; }
+        .bg-wine-light { background-color: #f3e8ff; }
+        .text-wine { color: #581c87; }
+        .hover-wine:hover { background-color: #3b0764; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-gray-100 font-sans text-gray-800 antialiased">
 
-    <header class="bg-wine text-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-6 py-6 text-center">
-            <h1 class="text-3xl font-extrabold tracking-wide">AL-WASILAH SCHOOL COMPLEX</h1>
-            <p class="text-gray-200 mt-1">School Management & Academic Reporting Portal</p>
-        </div>
-    </header>
-
-    <nav class="bg-wine-dark text-white border-b border-red-900">
-        <div class="max-w-7xl mx-auto px-6 flex flex-wrap justify-between items-center">
-            <div class="flex space-x-1 sm:space-x-4 py-3 text-sm font-medium">
-                <a href="{% url 'portal:portal_dashboard' %}" class="px-3 py-2 rounded hover:bg-wine transition">
-                    <i class="fas fa-chart-line mr-1"></i> Dashboard
-                </a>
-                <a href="{% url 'portal:student_directory' %}" class="px-3 py-2 rounded hover:bg-wine transition">
-                    <i class="fas fa-user-graduate mr-1"></i> Directory
-                </a>
-                <a href="{% url 'portal:grade_portal' %}" class="px-3 py-2 rounded hover:bg-wine transition">
-                    <i class="fas fa-pen-nib mr-1"></i> Trimester Grades
-                </a>
-                <a href="{% url 'portal:fee_admin' %}" class="px-3 py-2 rounded hover:bg-wine transition">
-                    <i class="fas fa-wallet mr-1"></i> Fees
-                </a>
-                <a href="{% url 'portal:promotion_management' %}" class="px-3 py-2 rounded hover:bg-wine transition">
-                    <i class="fas fa-arrow-up-right-dots mr-1"></i> Promotions
-                </a>
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="w-64 bg-wine-sidebar text-white flex flex-col flex-shrink-0">
+            <!-- Brand Logo Header -->
+            <div class="h-16 bg-wine-header flex items-center px-4 space-x-3 border-b border-purple-900">
+                <i class="fas fa-graduation-cap text-2xl text-purple-300"></i>
+                <span class="font-bold text-lg tracking-wide">Al-Wasilah Portal</span>
             </div>
-        </div>
-    </nav>
 
-    <div class="max-w-7xl mx-auto px-6 mt-4">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="p-4 mb-4 text-sm text-green-800 bg-green-100 rounded-lg border border-green-200" role="alert">
-                    {{ message }}
+            <!-- User Info Bar -->
+            <div class="p-4 bg-purple-950/40 flex items-center space-x-3 border-b border-purple-900/50">
+                <div class="w-9 h-9 rounded-full bg-purple-300 text-purple-950 font-bold flex items-center justify-center text-sm">
+                    AW
                 </div>
-            {% endfor %}
-        {% endif %}
+                <div>
+                    <p class="text-xs text-purple-300 font-semibold uppercase tracking-wider">ADMINISTRATOR</p>
+                    <p class="text-sm font-bold text-white">SYSTEM PORTAL</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1 text-sm font-medium">
+                <a href="{% url 'portal:portal_dashboard' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'dashboard' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-tachometer-alt w-6"></i> Dashboard
+                </a>
+                <a href="{% url 'portal:profile_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'profile' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-user w-6"></i> Profile
+                </a>
+                <a href="{% url 'portal:inbox_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'inbox' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-envelope w-6"></i> Inbox
+                </a>
+                <a href="{% url 'portal:calendar_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'calendar' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-calendar-alt w-6"></i> Calendar
+                </a>
+                <a href="{% url 'portal:help_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'help' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-info-circle w-6"></i> Help
+                </a>
+                <div class="pt-2 pb-1 border-t border-purple-900/50"></div>
+                <a href="{% url 'portal:academics_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'academics' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <span><i class="fas fa-book-open w-6"></i> Academics</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+                <a href="{% url 'portal:accommodation_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'accommodation' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <span><i class="fas fa-building w-6"></i> Accommodation</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+                <a href="{% url 'portal:finance_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'finance' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <span><i class="fas fa-balance-scale w-6"></i> Finance</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+                <a href="{% url 'portal:health_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'health' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <span><i class="fas fa-hospital w-6"></i> Health Services</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+                <a href="{% url 'portal:counselling_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'counselling' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <span><i class="fas fa-user-friends w-6"></i> Counselling</span>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content Column -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Header Navbar -->
+            <header class="h-16 bg-wine-header text-white flex items-center justify-between px-6 shadow-md">
+                <div class="flex items-center space-x-4">
+                    <button class="text-white hover:text-purple-200"><i class="fas fa-bars text-lg"></i></button>
+                    <span class="font-medium text-sm">Home</span>
+                </div>
+                <div class="flex items-center space-x-5 text-sm">
+                    <button class="hover:text-purple-200"><i class="fas fa-search"></i></button>
+                    <button class="hover:text-purple-200"><i class="fas fa-user"></i></button>
+                    <button class="hover:text-purple-200"><i class="fas fa-expand"></i></button>
+                    <button class="hover:text-purple-200"><i class="fas fa-th-large"></i></button>
+                </div>
+            </header>
+
+            <!-- Breadcrumb Navigation Bar -->
+            <div class="bg-white px-6 py-3 border-b border-gray-200 flex justify-between items-center text-sm shadow-sm">
+                <h1 class="text-xl font-semibold text-gray-800">{% block header_title %}Dashboard{% endblock %}</h1>
+                <div class="text-xs text-gray-500">Home / <span class="text-wine font-medium">{% block breadcrumb %}Dashboard{% endblock %}</span></div>
+            </div>
+
+            <!-- Page Body Area -->
+            <main class="flex-1 overflow-y-auto p-6">
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-white border-t border-gray-200 py-3 px-6 text-xs text-gray-500 flex justify-between items-center">
+                <span>Copyright &copy; 2026 <strong>Al-Wasilah School Complex</strong>.</span>
+                <span>Version 1.0.0</span>
+            </footer>
+        </div>
     </div>
-
-    <main class="max-w-7xl mx-auto px-6 py-6 flex-grow w-full">
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer class="bg-gray-900 text-white py-4 text-center text-xs mt-auto">
-        &copy; Al-Wasilah School Complex | All Rights Reserved
-    </footer>
 
 </body>
 </html>

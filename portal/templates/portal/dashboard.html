@@ -1,42 +1,129 @@
 {% extends 'portal/base.html' %}
 
-{% block content %}
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card border-left-danger shadow-sm h-100 py-2">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-uppercase mb-1 text-muted">LOGGED IN AS</div>
-                <div class="h4 mb-0 font-weight-bold text-danger">{{ request.user.username }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-left-primary shadow-sm h-100 py-2">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-uppercase mb-1 text-muted">ROLE ACCESS</div>
-                <div class="h4 mb-0 font-weight-bold text-primary">{{ role|capfirst }} Mode</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card border-left-success shadow-sm h-100 py-2">
-            <div class="card-body">
-                <div class="text-xs font-weight-bold text-uppercase mb-1 text-muted">SCHOOL SYSTEM</div>
-                <div class="h4 mb-0 font-weight-bold text-success">{{ branding.school_name|default:"Al-Wasilah School Complex" }}</div>
-            </div>
-        </div>
-    </div>
-</div>
+{% block title %}Dashboard | Al-Wasilah School Complex{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+{% block breadcrumb %}Dashboard{% endblock %}
 
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h5 class="m-0 font-weight-bold text-primary">
-            <i class="fas fa-th-list mr-2"></i>Portal Management & Records
-        </h5>
+{% block content %}
+<div class="space-y-6">
+    <!-- Top Summary Counter Widgets -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg border-t-4 border-wine shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase">Total Students</p>
+                <h3 class="text-2xl font-extrabold text-wine mt-1">{{ total_students }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-wine">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border-t-4 border-wine shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase">Total Expected</p>
+                <h3 class="text-2xl font-extrabold text-wine mt-1">GHS {{ total_due|floatformat:2 }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-wine">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border-t-4 border-green-600 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase">Fees Collected</p>
+                <h3 class="text-2xl font-extrabold text-green-700 mt-1">GHS {{ total_paid|floatformat:2 }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700">
+                <i class="fas fa-check-circle"></i>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border-t-4 border-red-600 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-bold text-gray-400 uppercase">Outstanding Balance</p>
+                <h3 class="text-2xl font-extrabold text-red-600 mt-1">GHS {{ balance|floatformat:2 }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <h6>System Overview</h6>
-        <p class="text-muted">Use the navigation menu above to manage grades, fee payments, and branding preferences.</p>
+
+    <!-- Main Dashboard Body Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column: Academic Schedule Table -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-bold text-gray-700 text-sm">Class Schedule & Academic Overview</h2>
+                    <div class="flex space-x-2 text-xs text-gray-500">
+                        <button class="hover:text-wine"><i class="fas fa-chevron-left"></i></button>
+                        <button class="hover:text-wine"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-wine-light text-wine uppercase font-bold border-b border-purple-200">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">Student Name</th>
+                                <th class="p-3">Subject</th>
+                                <th class="p-3">Trimester</th>
+                                <th class="p-3">Score</th>
+                                <th class="p-3">Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for grade in grades %}
+                            <tr class="hover:bg-purple-50/50">
+                                <td class="p-3 font-semibold text-gray-500">{{ forloop.counter }}</td>
+                                <td class="p-3 font-bold text-gray-800">{{ grade.student.full_name }}</td>
+                                <td class="p-3">{{ grade.subject }}</td>
+                                <td class="p-3">{{ grade.term.trimester }}</td>
+                                <td class="p-3 font-semibold">{{ grade.total_score }}</td>
+                                <td class="p-3">
+                                    <span class="px-2 py-0.5 text-xs font-bold rounded bg-purple-100 text-wine">
+                                        {{ grade.grade }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="p-4 text-center text-gray-400">No grades recorded for this term yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Current Term Info & Calendar Widget -->
+        <div class="space-y-6">
+            <!-- Active Term Card -->
+            <div class="bg-wine-header text-white rounded-lg p-6 shadow-md text-center">
+                <p class="text-xs font-semibold uppercase text-purple-200 tracking-widest">CURRENT SCHEDULE</p>
+                <h2 class="text-xl font-extrabold mt-2">{% if active_term %}{{ active_term.year }}{% else %}2026/2027{% endif %}</h2>
+                <p class="text-sm font-medium text-purple-200 mt-1">{% if active_term %}{{ active_term.trimester|upper }}{% else %}FIRST TRIMESTER{% endif %}</p>
+                <button class="mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold transition">
+                    View Timetable
+                </button>
+            </div>
+
+            <!-- Calendar Widget -->
+            <div class="bg-wine-sidebar text-white rounded-lg p-5 shadow-md">
+                <div class="flex justify-between items-center border-b border-purple-800/60 pb-3 mb-4">
+                    <h3 class="font-bold text-sm"><i class="fas fa-calendar-alt mr-2 text-purple-300"></i> Calendar</h3>
+                    <span class="text-xs text-purple-300 font-semibold">September 2026</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-purple-200">
+                    <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                    <div class="py-1 text-purple-400">30</div><div class="py-1 text-purple-400">31</div><div class="py-1">1</div><div class="py-1">2</div><div class="py-1">3</div><div class="py-1">4</div><div class="py-1">5</div>
+                    <div class="py-1">6</div><div class="py-1">7</div><div class="py-1">8</div><div class="py-1">9</div><div class="py-1">10</div><div class="py-1">11</div><div class="py-1">12</div>
+                    <div class="py-1">13</div><div class="py-1">14</div><div class="py-1">15</div><div class="py-1">16</div><div class="py-1 bg-wine-accent rounded-full text-white font-bold">17</div><div class="py-1">18</div><div class="py-1">19</div>
+                    <div class="py-1">20</div><div class="py-1">21</div><div class="py-1">22</div><div class="py-1">23</div><div class="py-1">24</div><div class="py-1">25</div><div class="py-1">26</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 {% endblock %}
