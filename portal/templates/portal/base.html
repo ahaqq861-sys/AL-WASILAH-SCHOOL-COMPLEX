@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Al-Wasilah School Complex{% endblock %}</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .bg-wine { background-color: #722F37; }
@@ -17,7 +15,6 @@
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen flex flex-col">
 
-    <!-- Header Banner -->
     <header class="bg-wine text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-6 py-6 text-center">
             <h1 class="text-3xl font-extrabold tracking-wide">AL-WASILAH SCHOOL COMPLEX</h1>
@@ -25,7 +22,6 @@
         </div>
     </header>
 
-    <!-- Navigation Bar -->
     <nav class="bg-wine-dark text-white border-b border-red-900">
         <div class="max-w-7xl mx-auto px-6 flex flex-wrap justify-between items-center">
             <div class="flex space-x-1 sm:space-x-4 py-3 text-sm font-medium">
@@ -48,7 +44,6 @@
         </div>
     </nav>
 
-    <!-- Flash Messages -->
     <div class="max-w-7xl mx-auto px-6 mt-4">
         {% if messages %}
             {% for message in messages %}
@@ -59,12 +54,10 @@
         {% endif %}
     </div>
 
-    <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto px-6 py-6 flex-grow w-full">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-900 text-white py-4 text-center text-xs mt-auto">
         &copy; Al-Wasilah School Complex | All Rights Reserved
     </footer>

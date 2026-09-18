@@ -1,19 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from .models import Student, Grade
+from .models import StudentProfile, Grade, FeeRecord, ClassLevel, AcademicTerm
 
 def dashboard(request):
-    total_students = Student.objects.count()
-    total_due = sum(s.fees_due for s in Student.objects.all())
-    total_paid = sum(s.fees_paid for s in Student.objects.all())
+    active_term = AcademicTerm.objects.filter(is_active=True).first()
+    students = StudentProfile.objects.all()
+    
+    total_students = students.count()
+    fee_records = FeeRecord.objects.all()
+    total_due = sum(f.amount_due for f in fee_records)
+    total_paid = sum(f.amount_paid for f in fee_records)
     balance = total_due - total_paid
 
     context = {
+        'active_term': active_term,
         'total_students': total_students,
         'total_due': total_due,
         'total_paid': total_paid,
         'balance': balance,
-        'active_tab': 'dashboard'
     }
     return render(request, 'portal/dashboard.html', context)
 
@@ -21,102 +25,86 @@ def dashboard(request):
 def student_directory(request):
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
-        name = request.POST.get('name')
-        student_class = request.POST.get('class')
+        full_name = request.POST.get('full_name')
+        class_id = request.POST.get('class_id')
         gender = request.POST.get('gender')
-        fees_due = request.POST.get('fees_due', 450.00)
 
-        Student.objects.create(
+        current_class = get_object_or_404(ClassLevel, id=class_id)
+        student = StudentProfile.objects.create(
             student_id=student_id,
-            name=name,
-            student_class=student_class,
-            gender=gender,
-            fees_due=fees_due
+            full_name=full_name,
+            current_class=current_class,
+            gender=gender
         )
-        messages.success(request, f"Student {name} registered successfully!")
+
+        active_term = AcademicTerm.objects.filter(is_active=True).first()
+        if active_term:
+            FeeRecord.objects.create(student=student, term=active_term, amount_due=450.00, amount_paid=0.00)
+
+        messages.success(request, f"Student {full_name} registered successfully!")
         return redirect('portal:student_directory')
 
-    students = Student.objects.all()
-    context = {'students': students, 'active_tab': 'students'}
-    return render(request, 'portal/student_directory.html', context)
+    students = StudentProfile.objects.select_related('current_class').all()
+    classes = ClassLevel.objects.all()
+    return render(request, 'portal/student_directory.html', {'students': students, 'classes': classes})
 
 
 def grade_portal(request):
-    trimester = request.GET.get('trimester', 'Trimester 1')
-    
+    active_term = AcademicTerm.objects.filter(is_active=True).first()
+
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
         subject = request.POST.get('subject')
         class_score = float(request.POST.get('class_score', 0))
         exam_score = float(request.POST.get('exam_score', 0))
-        total = class_score + exam_score
 
-        if total >= 80:
-            letter_grade = 'A'
-        elif total >= 70:
-            letter_grade = 'B'
-        elif total >= 60:
-            letter_grade = 'C'
-        elif total >= 50:
-            letter_grade = 'D'
-        else:
-            letter_grade = 'F'
-
-        student = get_object_or_404(Student, student_id=student_id)
+        student = get_object_or_404(StudentProfile, id=student_id)
         Grade.objects.create(
             student=student,
             subject=subject,
-            trimester=trimester,
+            term=active_term,
             class_score=class_score,
-            exam_score=exam_score,
-            total_score=total,
-            grade=letter_grade
+            exam_score=exam_score
         )
-        messages.success(request, f"Grade submitted for {student.name} in {subject} ({trimester})")
-        return redirect(f"{request.path}?trimester={trimester}")
+        messages.success(request, f"Grade recorded for {student.full_name} in {subject}.")
+        return redirect('portal:grade_portal')
 
-    students = Student.objects.all()
-    grades = Grade.objects.filter(trimester=trimester)
-    context = {
-        'students': students,
-        'grades': grades,
-        'selected_trimester': trimester,
-        'active_tab': 'grades'
-    }
-    return render(request, 'portal/grade_portal.html', context)
+    grades = Grade.objects.filter(term=active_term) if active_term else Grade.objects.none()
+    students = StudentProfile.objects.all()
+    return render(request, 'portal/grade_portal.html', {'grades': grades, 'students': students, 'active_term': active_term})
 
 
 def fee_admin(request):
     if request.method == 'POST':
-        student_id = request.POST.get('student_id')
-        amount = float(request.POST.get('amount', 0))
-        student = get_object_or_404(Student, student_id=student_id)
-        
-        student.fees_paid += amount
-        student.save()
-        messages.success(request, f"Payment of GHS {amount:.2f} recorded for {student.name}.")
+        fee_record_id = request.POST.get('fee_record_id')
+        payment_amount = float(request.POST.get('amount', 0))
+
+        fee_record = get_object_or_404(FeeRecord, id=fee_record_id)
+        fee_record.amount_paid += payment_amount
+        fee_record.save()
+
+        messages.success(request, f"Recorded GHS {payment_amount:.2f} payment for {fee_record.student.full_name}.")
         return redirect('portal:fee_admin')
 
-    students = Student.objects.all()
-    context = {'students': students, 'active_tab': 'fees'}
-    return render(request, 'portal/fee_admin.html', context)
+    fee_records = FeeRecord.objects.select_related('student', 'term').all()
+    return render(request, 'portal/fee_admin.html', {'fee_records': fee_records})
 
 
 def promotion_management(request):
-    class_order = ["Basic 1", "Basic 2", "Basic 3", "Basic 4", "Basic 5", "Basic 6", "JHS 1", "JHS 2", "JHS 3", "Graduated"]
-
     if request.method == 'POST':
         student_id = request.POST.get('student_id')
-        student = get_object_or_404(Student, student_id=student_id)
+        student = get_object_or_404(StudentProfile, id=student_id)
         
-        if student.student_class in class_order and student.student_class != "Graduated":
-            curr_idx = class_order.index(student.student_class)
-            student.student_class = class_order[curr_idx + 1]
-            student.promoted = True
+        next_class = ClassLevel.objects.filter(order__gt=student.current_class.order).order_by('order').first()
+        if next_class:
+            student.current_class = next_class
+            student.is_promoted = True
             student.save()
-            messages.success(request, f"{student.name} promoted to {student.student_class}!")
+            messages.success(request, f"{student.full_name} promoted to {next_class.name}!")
+        else:
+            messages.warning(request, f"{student.full_name} is already in the highest available class level.")
+
         return redirect('portal:promotion_management')
 
-    students = Student.objects.all()
-    context = {'students': students, 'active_tab': 'promotion'}
-    return render(request, 'portal/promotion_management.html', context)
+    students = StudentProfile.objects.select_related('current_class').all()
+    return render(request, 'portal/promotion.html', {'students': students})
