@@ -1,84 +1,63 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 
-ROLE_CHOICES = (
-    ('admin', 'Admin'),
-    ('teacher', 'Teacher'),
-    ('student', 'Student'),
-)
+class ClassLevel(models.Model):
+    name = models.CharField(max_length=50, unique=True) # e.g., Basic 1, JHS 1
+    numeric_order = models.IntegerField(default=1) # Used to order classes for promotion
+    next_class = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='previous_class')
 
-SEX_CHOICES = (
-    ('male', 'Male'),
-    ('female', 'Female'),
-    ('other', 'Other'),
-)
-
-class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')
-    
-    first_name = models.CharField(max_length=100, blank=True, null=True)
-    last_name = models.CharField(max_length=100, blank=True, null=True)
-    sex = models.CharField(max_length=10, choices=SEX_CHOICES, blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    passport_photo = models.ImageField(upload_to='passports/', blank=True, null=True)
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    
-    can_edit_branding = models.BooleanField(default=False)
-    is_first_login = models.BooleanField(default=True)
+    class Meta:
+        ordering = ['numeric_order']
 
     def __str__(self):
-        return f"{self.user.username} ({self.role.upper()})"
+        return self.name
 
-class SchoolBranding(models.Model):
-    school_name = models.CharField(max_length=255, default='Al-Wasilah School Complex')
-    tagline = models.CharField(max_length=255, default='Knowledge and Virtue')
-    logo = models.ImageField(upload_to='school_branding/', blank=True, null=True)
-    primary_color = models.CharField(max_length=20, default='#800020')
-    secondary_color = models.CharField(max_length=20, default='#1A252C')
-    
-    phone_number = models.CharField(max_length=20, default='+233 00 000 0000')
-    email_address = models.EmailField(default='info@alwasilah.edu.gh')
-    address = models.TextField(default='P.O. Box 123, School Location')
+class AcademicTerm(models.Model):
+    TRIMESTER_CHOICES = [
+        ('Trimester 1', 'Trimester 1'),
+        ('Trimester 2', 'Trimester 2'),
+        ('Trimester 3', 'Trimester 3'),
+    ]
+    academic_year = models.CharField(max_length=20) # e.g., 2026/2027
+    trimester = models.CharField(max_length=20, choices=TRIMESTER_CHOICES)
+    is_current = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if self.is_current:
+            AcademicTerm.objects.filter(is_current=True).exclude(pk=self.pk).update(is_current=False)
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.school_name
+        return f"{self.academic_year} - {self.trimester}"
 
-class StudentGrade(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='grades')
-    subject = models.CharField(max_length=100)
+class StudentProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    student_id = models.CharField(max_length=20, unique=True)
+    current_class = models.ForeignKey(ClassLevel, on_delete=models.SET_NULL, null=True, blank=True)
+    is_graduated = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.user.get_full_name()} ({self.current_class})"
+
+class TeacherProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    assigned_classes = models.ManyToManyField(ClassLevel, blank=True)
+
+    def __str__(self):
+        return self.user.get_full_name()
+
+class Grade(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE)
+    subject_name = models.CharField(max_length=100)
     score = models.DecimalField(max_digits=5, decimal_places=2)
-    term = models.CharField(max_length=50, default='Term 1')
-    date_recorded = models.DateField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.student.username} - {self.subject}: {self.score}"
-
-class FeePayment(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='fee_payments')
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
-    total_fee = models.DecimalField(max_digits=10, decimal_places=2)
-    date_paid = models.DateField(auto_now_add=True)
+class FeeRecord(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    term = models.ForeignKey(AcademicTerm, on_delete=models.CASCADE)
+    amount_due = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     @property
     def balance(self):
-        return self.total_fee - self.amount_paid
-
-    def __str__(self):
-        return f"{self.student.username} - Paid: {self.amount_paid}"
-
-@receiver(post_save, sender=User)
-def create_or_update_user_profile(sender, instance, created, **kwargs):
-    if created:
-        role = 'admin' if instance.is_superuser else 'student'
-        can_brand = True if instance.is_superuser else False
-        UserProfile.objects.get_or_create(
-            user=instance, 
-            defaults={
-                'role': role, 
-                'can_edit_branding': can_brand,
-                'is_first_login': False if instance.is_superuser else True
-            }
-        )
+        return self.amount_due - self.amount_paid
