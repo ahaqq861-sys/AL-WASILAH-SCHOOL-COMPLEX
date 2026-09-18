@@ -1,0 +1,35 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">Financial Administration</h1>
+    <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+        <table class="w-full text-left text-xs">
+            <thead class="bg-purple-50 text-purple-900 font-bold">
+                <tr>
+                    <th class="p-3">Student</th>
+                    <th class="p-3">Amount Due</th>
+                    <th class="p-3">Amount Paid</th>
+                    <th class="p-3">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for fee in fee_records %}
+                <tr>
+                    <td class="p-3 font-bold">{{ fee.student.full_name }}</td>
+                    <td class="p-3 font-semibold">GHS {{ fee.amount_due }}</td>
+                    <td class="p-3 text-green-700 font-semibold">GHS {{ fee.amount_paid }}</td>
+                    <td class="p-3">
+                        <span class="px-2 py-0.5 text-xs font-bold rounded {% if fee.is_fully_paid %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {% if fee.is_fully_paid %}PAID{% else %}OWING{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="p-4 text-center text-gray-400">No financial records generated.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -2,49 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login | {{ branding.school_name }}</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <title>Login | Al-Wasilah Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-dark d-flex align-items-center min-vh-100">
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header text-white text-center py-4" style="background-color: {{ branding.primary_color|default:'#800020' }};">
-                    {% if branding.logo %}
-                      <img src="{{ branding.logo.url }}" alt="School Logo" class="mb-2" style="max-height: 80px; width: auto;">
-                    {% endif %}
-                    <h3 class="font-weight-bold mb-1">{{ branding.school_name }}</h3>
-                    <small class="text-light">{{ branding.tagline }}</small>
-                </div>
-                <div class="card-body p-4">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                    <form method="POST">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label><i class="fas fa-user mr-2"></i>Username</label>
-                            <input type="text" name="username" class="form-control" required placeholder="Enter username">
-                        </div>
-                        <div class="form-group mb-3">
-                            <label><i class="fas fa-lock mr-2"></i>Password</label>
-                            <input type="password" name="password" class="form-control" required placeholder="Enter password">
-                        </div>
-                        <button type="submit" class="btn btn-block text-white font-weight-bold py-2" style="background-color: {{ branding.primary_color|default:'#800020' }};">Sign In</button>
-                    </form>
-                </div>
-                <div class="card-footer bg-light text-center py-3">
-                    <p class="small text-muted mb-1"><i class="fas fa-phone mr-1"></i> {{ branding.phone_number }}</p>
-                    <p class="small text-muted mb-1"><i class="fas fa-envelope mr-1"></i> {{ branding.email_address }}</p>
-                    <p class="small text-muted mb-0"><i class="fas fa-map-marker-alt mr-1"></i> {{ branding.address }}</p>
-                </div>
+<body class="bg-purple-950 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-xl p-6">
+        <h2 class="text-2xl font-extrabold text-purple-900 text-center">Al-Wasilah Portal</h2>
+        <p class="text-xs text-gray-500 text-center mt-1 mb-6">Enter your registered credentials to access your account</p>
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Username</label>
+                <input type="text" name="username" required class="w-full p-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-purple-800">
             </div>
-        </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
+                <input type="password" name="password" required class="w-full p-2.5 border border-gray-300 rounded text-sm focus:outline-none focus:border-purple-800">
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-purple-900 text-white font-bold rounded text-sm hover:bg-purple-950 transition">Log In</button>
+        </form>
     </div>
-</div>
 </body>
 </html>

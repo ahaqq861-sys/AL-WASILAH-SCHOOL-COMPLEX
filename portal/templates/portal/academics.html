@@ -1,0 +1,44 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">Academics Module</h1>
+
+    {% if user_profile.role == 'TEACHER' %}
+    <div class="bg-white p-6 rounded-lg shadow border border-purple-200">
+        <h2 class="text-lg font-bold text-purple-900 mb-2">Request Portal Modification</h2>
+        <p class="text-xs text-gray-500 mb-4">Lecturers require Admin approval before changes take effect.</p>
+        <form method="POST" action="{% url 'portal:submit_mod' %}" class="space-y-3">
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="Modification Title (e.g. Update Grade Schedule)" required class="w-full p-2 border border-gray-300 rounded text-sm">
+            <textarea name="description" placeholder="Describe requested modification details..." required class="w-full p-2 border border-gray-300 rounded text-sm h-24"></textarea>
+            <button type="submit" class="px-4 py-2 bg-purple-800 text-white font-bold rounded text-xs hover:bg-purple-900">Submit for Admin Approval</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
+        <h2 class="font-bold text-gray-700 mb-3 text-sm">Registered Enrolled Students</h2>
+        <table class="w-full text-left text-xs">
+            <thead class="bg-purple-50 text-purple-900 font-bold">
+                <tr>
+                    <th class="p-3">#</th>
+                    <th class="p-3">Full Name</th>
+                    <th class="p-3">Index Number</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for student in students %}
+                <tr>
+                    <td class="p-3 font-semibold">{{ forloop.counter }}</td>
+                    <td class="p-3 font-bold">{{ student.full_name }}</td>
+                    <td class="p-3">{{ student.index_number }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="p-4 text-center text-gray-400">No students found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -3,15 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Al-Wasilah School Complex | Portal{% endblock %}</title>
+    <title>{% block title %}{{ branding.school_name }} | Portal{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        .bg-wine-header { background-color: #581c87; }
-        .bg-wine-sidebar { background-color: #2e1065; }
+        .bg-wine-header { background-color: {{ branding.primary_color|default:"#581c87" }}; }
+        .bg-wine-sidebar { background-color: {{ branding.secondary_color|default:"#2e1065" }}; }
         .bg-wine-accent { background-color: #7e22ce; }
-        .bg-wine-light { background-color: #f3e8ff; }
-        .text-wine { color: #581c87; }
         .hover-wine:hover { background-color: #3b0764; }
     </style>
 </head>
@@ -20,24 +18,24 @@
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar Navigation -->
         <aside class="w-64 bg-wine-sidebar text-white flex flex-col flex-shrink-0">
-            <!-- Brand Logo Header -->
             <div class="h-16 bg-wine-header flex items-center px-4 space-x-3 border-b border-purple-900">
                 <i class="fas fa-graduation-cap text-2xl text-purple-300"></i>
-                <span class="font-bold text-lg tracking-wide">Al-Wasilah Portal</span>
+                <span class="font-bold text-lg tracking-wide">{{ branding.logo_text }}</span>
             </div>
 
-            <!-- User Info Bar -->
-            <div class="p-4 bg-purple-950/40 flex items-center space-x-3 border-b border-purple-900/50">
-                <div class="w-9 h-9 rounded-full bg-purple-300 text-purple-950 font-bold flex items-center justify-center text-sm">
-                    AW
+            <div class="p-4 bg-purple-950/40 flex items-center justify-between border-b border-purple-900/50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-full bg-purple-300 text-purple-950 font-bold flex items-center justify-center text-sm">
+                        {{ user.username|slice:":2"|upper }}
+                    </div>
+                    <div>
+                        <p class="text-xs text-purple-300 font-semibold uppercase">{{ user_profile.get_role_display|default:"USER" }}</p>
+                        <p class="text-sm font-bold text-white">{{ user.username }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-xs text-purple-300 font-semibold uppercase tracking-wider">ADMINISTRATOR</p>
-                    <p class="text-sm font-bold text-white">SYSTEM PORTAL</p>
-                </div>
+                <a href="{% url 'portal:logout' %}" class="text-purple-300 hover:text-white text-xs"><i class="fas fa-sign-out-alt text-base"></i></a>
             </div>
 
-            <!-- Navigation Links -->
             <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1 text-sm font-medium">
                 <a href="{% url 'portal:portal_dashboard' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'dashboard' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
                     <i class="fas fa-tachometer-alt w-6"></i> Dashboard
@@ -54,13 +52,11 @@
                 <a href="{% url 'portal:help_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'help' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
                     <i class="fas fa-info-circle w-6"></i> Help
                 </a>
+
                 <div class="pt-2 pb-1 border-t border-purple-900/50"></div>
+
                 <a href="{% url 'portal:academics_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'academics' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
                     <span><i class="fas fa-book-open w-6"></i> Academics</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-                <a href="{% url 'portal:accommodation_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'accommodation' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <span><i class="fas fa-building w-6"></i> Accommodation</span>
                     <i class="fas fa-chevron-right text-xs"></i>
                 </a>
                 <a href="{% url 'portal:finance_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'finance' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
@@ -75,41 +71,40 @@
                     <span><i class="fas fa-user-friends w-6"></i> Counselling</span>
                     <i class="fas fa-chevron-right text-xs"></i>
                 </a>
+
+                {% if user_profile.role == 'ADMIN' %}
+                <div class="pt-2 pb-1 border-t border-purple-900/50"></div>
+                <p class="px-3 text-xs font-bold text-purple-300 uppercase tracking-wider mb-1">Admin Tools</p>
+                <a href="{% url 'portal:register_user' %}" class="flex items-center px-3 py-2 rounded-md hover-wine {% if active_tab == 'register' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-user-plus w-6"></i> Register User
+                </a>
+                <a href="{% url 'portal:update_branding' %}" class="flex items-center px-3 py-2 rounded-md hover-wine {% if active_tab == 'branding' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-paint-brush w-6"></i> Branding Settings
+                </a>
+                {% endif %}
             </nav>
         </aside>
 
-        <!-- Main Content Column -->
+        <!-- Main Body -->
         <div class="flex-1 flex flex-col overflow-hidden">
-            <!-- Top Header Navbar -->
             <header class="h-16 bg-wine-header text-white flex items-center justify-between px-6 shadow-md">
-                <div class="flex items-center space-x-4">
-                    <button class="text-white hover:text-purple-200"><i class="fas fa-bars text-lg"></i></button>
-                    <span class="font-medium text-sm">Home</span>
-                </div>
-                <div class="flex items-center space-x-5 text-sm">
-                    <button class="hover:text-purple-200"><i class="fas fa-search"></i></button>
-                    <button class="hover:text-purple-200"><i class="fas fa-user"></i></button>
-                    <button class="hover:text-purple-200"><i class="fas fa-expand"></i></button>
-                    <button class="hover:text-purple-200"><i class="fas fa-th-large"></i></button>
-                </div>
+                <span class="font-bold text-base">{{ branding.school_name }}</span>
+                <a href="{% url 'portal:logout' %}" class="hover:text-purple-200 text-sm font-semibold"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
             </header>
 
-            <!-- Breadcrumb Navigation Bar -->
-            <div class="bg-white px-6 py-3 border-b border-gray-200 flex justify-between items-center text-sm shadow-sm">
-                <h1 class="text-xl font-semibold text-gray-800">{% block header_title %}Dashboard{% endblock %}</h1>
-                <div class="text-xs text-gray-500">Home / <span class="text-wine font-medium">{% block breadcrumb %}Dashboard{% endblock %}</span></div>
+            {% if messages %}
+            <div class="px-6 mt-4">
+                {% for message in messages %}
+                <div class="p-3 text-sm rounded border {% if message.tags == 'error' %}bg-red-100 text-red-700 border-red-300{% else %}bg-green-100 text-green-700 border-green-300{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
             </div>
+            {% endif %}
 
-            <!-- Page Body Area -->
             <main class="flex-1 overflow-y-auto p-6">
                 {% block content %}{% endblock %}
             </main>
-
-            <!-- Footer -->
-            <footer class="bg-white border-t border-gray-200 py-3 px-6 text-xs text-gray-500 flex justify-between items-center">
-                <span>Copyright &copy; 2026 <strong>Al-Wasilah School Complex</strong>.</span>
-                <span>Version 1.0.0</span>
-            </footer>
         </div>
     </div>
 

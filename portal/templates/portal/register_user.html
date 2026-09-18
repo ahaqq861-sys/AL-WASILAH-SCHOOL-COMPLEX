@@ -1,0 +1,38 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow border border-gray-200">
+    <h2 class="text-xl font-bold text-purple-950 mb-1">Register Student / Lecturer</h2>
+    <p class="text-xs text-gray-500 mb-4">Admin privileges required to create portal access credentials.</p>
+    <form method="POST" class="space-y-3">
+        {% csrf_token %}
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Account Role</label>
+            <select name="role" class="w-full p-2 border rounded text-sm">
+                <option value="STUDENT">Student</option>
+                <option value="TEACHER">Teacher / Lecturer</option>
+                <option value="ADMIN">Admin</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Username</label>
+            <input type="text" name="username" required class="w-full p-2 border rounded text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+            <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">First Name</label>
+                <input type="text" name="first_name" required class="w-full p-2 border rounded text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Last Name</label>
+                <input type="text" name="last_name" required class="w-full p-2 border rounded text-sm">
+            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Password</label>
+            <input type="password" name="password" required class="w-full p-2 border rounded text-sm">
+        </div>
+        <button type="submit" class="w-full py-2 bg-purple-900 text-white font-bold rounded text-xs hover:bg-purple-950">Register Account</button>
+    </form>
+</div>
+{% endblock %}
