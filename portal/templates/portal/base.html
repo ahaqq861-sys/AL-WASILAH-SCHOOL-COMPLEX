@@ -3,110 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ branding.school_name }} | Portal{% endblock %}</title>
+    <title>{{ branding.school_name|default:"Al-Wasilah Portal" }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .bg-wine-header { background-color: {{ branding.primary_color|default:"#581c87" }}; }
-        .bg-wine-sidebar { background-color: {{ branding.secondary_color|default:"#2e1065" }}; }
-        .bg-wine-accent { background-color: #7e22ce; }
-        .hover-wine:hover { background-color: #3b0764; }
-    </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 font-sans text-gray-800 antialiased">
+<body class="bg-gray-100 font-sans antialiased text-gray-800 min-h-screen flex">
 
-    <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-wine-sidebar text-white flex flex-col flex-shrink-0">
-            <div class="h-16 bg-wine-header flex items-center px-4 space-x-3 border-b border-purple-900">
-                <i class="fas fa-graduation-cap text-2xl text-purple-300"></i>
-                <span class="font-bold text-lg tracking-wide">{{ branding.logo_text }}</span>
-            </div>
-
-            <div class="p-4 bg-purple-950/40 flex items-center justify-between border-b border-purple-900/50">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-full bg-purple-300 text-purple-950 font-bold flex items-center justify-center text-sm">
-                        {{ user.username|slice:":2"|upper }}
+    <!-- Sidebar -->
+    <aside class="w-64 bg-purple-950 text-white min-h-screen flex flex-col justify-between shrink-0">
+        <div class="p-4 space-y-6">
+            <!-- School / Portal Logo & Branding -->
+            <div class="flex items-center space-x-3 px-2 border-b border-purple-800 pb-4">
+                {% if branding.logo_image %}
+                    <img src="{{ branding.logo_image.url }}" class="w-10 h-10 rounded-full object-cover border-2 border-white">
+                {% else %}
+                    <div class="w-10 h-10 rounded-full bg-purple-800 flex items-center justify-center font-bold text-base shadow">
+                        {{ branding.school_name|slice:":2"|upper }}
                     </div>
-                    <div>
-                        <p class="text-xs text-purple-300 font-semibold uppercase">{{ user_profile.get_role_display|default:"USER" }}</p>
-                        <p class="text-sm font-bold text-white">{{ user.username }}</p>
-                    </div>
+                {% endif %}
+                <div class="overflow-hidden">
+                    <h1 class="font-bold text-sm truncate leading-tight">{{ branding.school_name|default:"Al-Wasilah" }}</h1>
+                    <p class="text-[10px] text-purple-300 truncate">{{ branding.logo_text|default:"School Portal" }}</p>
                 </div>
-                <a href="{% url 'portal:logout' %}" class="text-purple-300 hover:text-white text-xs"><i class="fas fa-sign-out-alt text-base"></i></a>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1 text-sm font-medium">
-                <a href="{% url 'portal:portal_dashboard' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'dashboard' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-tachometer-alt w-6"></i> Dashboard
-                </a>
-                <a href="{% url 'portal:profile_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'profile' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-user w-6"></i> Profile
-                </a>
-                <a href="{% url 'portal:inbox_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'inbox' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-envelope w-6"></i> Inbox
-                </a>
-                <a href="{% url 'portal:calendar_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'calendar' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-calendar-alt w-6"></i> Calendar
-                </a>
-                <a href="{% url 'portal:help_view' %}" class="flex items-center px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'help' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-info-circle w-6"></i> Help
+            <!-- Navigation Links -->
+            <nav class="space-y-1 text-xs">
+                <a href="{% url 'portal:portal_dashboard' %}" class="flex items-center px-3 py-2.5 rounded-lg font-medium hover:bg-purple-800 transition {% if active_tab == 'dashboard' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-chart-line w-6 text-purple-300"></i> Dashboard
                 </a>
 
-                <div class="pt-2 pb-1 border-t border-purple-900/50"></div>
-
-                <a href="{% url 'portal:academics_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'academics' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <span><i class="fas fa-book-open w-6"></i> Academics</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
+                <!-- Admin Tools -->
+                {% if user_profile.role == 'ADMIN' or user.is_superuser %}
+                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-purple-400 uppercase tracking-wider">Admin Controls</div>
+                <a href="{% url 'portal:register_user' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'register' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-user-plus w-6 text-purple-300"></i> Register Member
                 </a>
-                <a href="{% url 'portal:finance_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'finance' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <span><i class="fas fa-balance-scale w-6"></i> Finance</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-                <a href="{% url 'portal:health_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'health' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <span><i class="fas fa-hospital w-6"></i> Health Services</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-                <a href="{% url 'portal:counselling_view' %}" class="flex items-center justify-between px-3 py-2.5 rounded-md hover-wine {% if active_tab == 'counselling' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <span><i class="fas fa-user-friends w-6"></i> Counselling</span>
-                    <i class="fas fa-chevron-right text-xs"></i>
-                </a>
-
-                {% if user_profile.role == 'ADMIN' %}
-                <div class="pt-2 pb-1 border-t border-purple-900/50"></div>
-                <p class="px-3 text-xs font-bold text-purple-300 uppercase tracking-wider mb-1">Admin Tools</p>
-                <a href="{% url 'portal:register_user' %}" class="flex items-center px-3 py-2 rounded-md hover-wine {% if active_tab == 'register' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-user-plus w-6"></i> Register User
-                </a>
-                <a href="{% url 'portal:update_branding' %}" class="flex items-center px-3 py-2 rounded-md hover-wine {% if active_tab == 'branding' %}bg-wine-accent text-white{% else %}text-purple-200{% endif %}">
-                    <i class="fas fa-paint-brush w-6"></i> Branding Settings
+                <a href="{% url 'portal:update_branding' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'branding' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-sliders-h w-6 text-purple-300"></i> School Branding
                 </a>
                 {% endif %}
+
+                <!-- Academics Section -->
+                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-purple-400 uppercase tracking-wider">Academics</div>
+                <a href="{% url 'portal:academics_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'academics' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-book w-6 text-purple-300"></i> Academics & Grades
+                </a>
+                <a href="{% url 'portal:attendance_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'attendance' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-clipboard-user w-6 text-purple-300"></i> Attendance
+                </a>
+                <a href="{% url 'portal:timetable_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'timetable' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-calendar-alt w-6 text-purple-300"></i> Class Timetable
+                </a>
+
+                <!-- Finance Section -->
+                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-purple-400 uppercase tracking-wider">Finance</div>
+                <a href="{% url 'portal:finance_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'finance' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-wallet w-6 text-purple-300"></i> Fees & Payments
+                </a>
+
+                <!-- General Pages -->
+                <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-purple-400 uppercase tracking-wider">Services</div>
+                <a href="{% url 'portal:health_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'health' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-notes-medical w-6 text-purple-300"></i> Health Services
+                </a>
+                <a href="{% url 'portal:counselling_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-purple-800 transition {% if active_tab == 'counselling' %}bg-purple-800 text-white{% else %}text-purple-200{% endif %}">
+                    <i class="fas fa-user-friends w-6 text-purple-300"></i> Counselling
+                </a>
             </nav>
-        </aside>
+        </div>
 
-        <!-- Main Body -->
-        <div class="flex-1 flex flex-col overflow-hidden">
-            <header class="h-16 bg-wine-header text-white flex items-center justify-between px-6 shadow-md">
-                <span class="font-bold text-base">{{ branding.school_name }}</span>
-                <a href="{% url 'portal:logout' %}" class="hover:text-purple-200 text-sm font-semibold"><i class="fas fa-sign-out-alt mr-1"></i> Logout</a>
-            </header>
+        <!-- User Profile Footer -->
+        <div class="p-4 border-t border-purple-900 bg-purple-900/50 flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2 overflow-hidden">
+                <div class="w-8 h-8 rounded-full bg-purple-700 flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                    {{ user.username|slice:":2" }}
+                </div>
+                <div class="overflow-hidden">
+                    <p class="font-bold truncate text-white">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-[10px] text-purple-300 uppercase font-semibold truncate">{{ user_profile.role|default:"USER" }}</p>
+                </div>
+            </div>
+            <a href="{% url 'portal:logout' %}" class="text-purple-300 hover:text-white font-bold ml-2 shrink-0 title="Logout"">
+                <i class="fas fa-sign-out-alt text-base"></i>
+            </a>
+        </div>
+    </aside>
 
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- Top Navbar -->
+        <header class="bg-purple-900 text-white px-6 py-4 flex items-center justify-between shadow">
+            <h1 class="text-lg font-bold tracking-wide">{{ branding.school_name|default:"Al-Wasilah School Complex" }}</h1>
+            <div class="flex items-center space-x-4 text-xs">
+                <span class="bg-purple-800 px-3 py-1 rounded-full font-semibold border border-purple-700">
+                    Active Term: {{ active_term.trimester|default:"Trimester 1" }} ({{ active_term.year|default:"2026/2027" }})
+                </span>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        <div class="p-4 pb-0 max-w-7xl w-full mx-auto">
             {% if messages %}
-            <div class="px-6 mt-4">
                 {% for message in messages %}
-                <div class="p-3 text-sm rounded border {% if message.tags == 'error' %}bg-red-100 text-red-700 border-red-300{% else %}bg-green-100 text-green-700 border-green-300{% endif %}">
+                <div class="p-3 mb-3 text-xs rounded-lg border {% if message.tags == 'error' %}bg-red-100 text-red-800 border-red-300{% else %}bg-green-100 text-green-800 border-green-300{% endif %}">
                     {{ message }}
                 </div>
                 {% endfor %}
-            </div>
             {% endif %}
-
-            <main class="flex-1 overflow-y-auto p-6">
-                {% block content %}{% endblock %}
-            </main>
         </div>
-    </div>
+
+        <!-- Page Dynamic Body -->
+        <div class="p-6 flex-1 max-w-7xl w-full mx-auto">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
 
 </body>
 </html>
