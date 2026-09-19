@@ -10,13 +10,11 @@
             {% csrf_token %}
             <div>
                 <label class="block font-bold text-gray-700 mb-1">Select Student *</label>
-                <input list="students_list" name="student_id_search" placeholder="Type student name/index..." class="w-full p-2 border rounded bg-white">
-                <datalist id="students_list">
+                <select name="student_id" required class="w-full p-2 border rounded bg-white">
                     {% for s in students %}
                     <option value="{{ s.user.id }}">{{ s.user.get_full_name }} ({{ s.index_number }})</option>
                     {% endfor %}
-                </datalist>
-                <input type="hidden" name="student_id" id="real_student_id">
+                </select>
             </div>
 
             <div>
@@ -30,12 +28,18 @@
             </div>
 
             <div>
-                <label class="block font-bold text-gray-700 mb-1">Academic Term *</label>
-                <select name="term_id" class="w-full p-2 border rounded bg-white" required>
+                <!-- Academic Term Input + Datalist (Editable & Selectable) -->
+                <label class="block font-bold text-gray-700 mb-1">Academic Term (Select or Type) *</label>
+                <input list="terms_list" name="term_input" value="Trimester 1" placeholder="e.g. Trimester 1, Trimester 2..." class="w-full p-2 border rounded bg-white" required>
+                <datalist id="terms_list">
                     {% for t in terms %}
-                    <option value="{{ t.id }}" {% if t.is_active %}selected{% endif %}>{{ t.year }} - {{ t.trimester }}</option>
+                    <option value="{{ t.trimester }}">
+                    {% empty %}
+                    <option value="Trimester 1">
+                    <option value="Trimester 2">
+                    <option value="Trimester 3">
                     {% endfor %}
-                </select>
+                </datalist>
             </div>
 
             <div>
@@ -94,16 +98,4 @@
         </table>
     </div>
 </div>
-
-<script>
-    document.querySelector('input[name="student_id_search"]').addEventListener('input', function(e) {
-        const val = e.target.value;
-        const listOptions = document.querySelectorAll('#students_list option');
-        listOptions.forEach(option => {
-            if (option.value === val) {
-                document.getElementById('real_student_id').value = val;
-            }
-        });
-    });
-</script>
 {% endblock %}

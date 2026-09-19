@@ -52,6 +52,91 @@ def dashboard(request):
     return render(request, 'portal/dashboard.html', context)
 
 @login_required
+def upload_results_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role not in ['ADMIN', 'TEACHER']:
+        messages.error(request, 'Unauthorized to upload results.')
+        return redirect('portal:portal_dashboard')
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        course_name = request.POST.get('course_name_input')
+        term_input = request.POST.get('term_input', 'Trimester 1')
+        score = request.POST.get('score')
+        grade_letter = request.POST.get('grade_letter')
+        teacher_remark = request.POST.get('teacher_remark', 'Good performance.')
+
+        # Resolve or create AcademicTerm from typed/selected text
+        term_obj, _ = AcademicTerm.objects.get_or_create(
+            trimester=term_input.strip(),
+            defaults={'year': '2026/2027', 'is_active': True}
+        )
+        
+        student_user = get_object_or_404(User, id=student_id)
+
+        if course_name:
+            default_class = student_user.profile.assigned_class if hasattr(student_user, 'profile') and student_user.profile.assigned_class else ClassLevel.objects.first()
+            course_obj, _ = Course.objects.get_or_create(
+                name=course_name.strip(),
+                defaults={'code': f"CRS-{uuid.uuid4().hex[:4].upper()}", 'class_level': default_class}
+            )
+
+            Grade.objects.update_or_create(
+                student=student_user,
+                course=course_obj,
+                term=term_obj,
+                defaults={
+                    'score': score,
+                    'grade_letter': grade_letter,
+                    'teacher_remark': teacher_remark
+                }
+            )
+            messages.success(request, f'Result uploaded for {student_user.get_full_name()} in {course_obj.name} ({term_obj.trimester}).')
+        else:
+            messages.error(request, 'Please specify or select a course.')
+
+        return redirect('portal:academics_view')
+
+@login_required
+def upload_fees_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
+        messages.error(request, 'Only Admins can edit fee ledgers.')
+        return redirect('portal:finance_view')
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        term_input = request.POST.get('term_input', 'Trimester 1')
+        action_type = request.POST.get('action_type')
+        amount = float(request.POST.get('amount', 0.00))
+
+        term_obj, _ = AcademicTerm.objects.get_or_create(
+            trimester=term_input.strip(),
+            defaults={'year': '2026/2027', 'is_active': True}
+        )
+
+        fee_record, created = FeeRecord.objects.get_or_create(
+            student_id=student_id,
+            term=term_obj,
+            defaults={'amount_due': 0.00, 'amount_paid': 0.00}
+        )
+
+        if action_type == 'DEBIT':
+            fee_record.amount_due = float(fee_record.amount_due) + amount
+            messages.success(request, f'Debited GHS {amount:.2f} (Fee Bill) to student ledger.')
+        elif action_type == 'CREDIT':
+            fee_record.amount_paid = float(fee_record.amount_paid) + amount
+            receipt = f"REC-{uuid.uuid4().hex[:8].upper()}"
+            PaymentTransaction.objects.create(
+                fee_record=fee_record,
+                amount=amount,
+                receipt_number=receipt,
+                payment_method='Credit Adjustment / Payment'
+            )
+            messages.success(request, f'Credited GHS {amount:.2f} to student ledger. Receipt #{receipt}')
+
+        fee_record.save()
+        return redirect('portal:finance_view')
+
+@login_required
 def register_user_view(request):
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
         messages.error(request, 'Only Admins can register new users.')
@@ -100,7 +185,6 @@ def register_user_view(request):
             profile.guardian_email = request.POST.get('guardian_email', '')
             profile.guardian_relationship = request.POST.get('guardian_relationship', '')
 
-            # Support for selection or custom typed class
             if role == 'STUDENT' and class_input:
                 class_obj, _ = ClassLevel.objects.get_or_create(name=class_input.strip())
                 profile.assigned_class = class_obj
@@ -120,84 +204,6 @@ def register_user_view(request):
     context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user', 'assigned_class')
     context['teachers'] = UserProfile.objects.filter(role='TEACHER').select_related('user')
     return render(request, 'portal/register_user.html', context)
-
-@login_required
-def upload_results_view(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role not in ['ADMIN', 'TEACHER']:
-        messages.error(request, 'Unauthorized to upload results.')
-        return redirect('portal:portal_dashboard')
-
-    if request.method == 'POST':
-        student_id = request.POST.get('student_id')
-        course_name = request.POST.get('course_name_input')
-        term_id = request.POST.get('term_id')
-        score = request.POST.get('score')
-        grade_letter = request.POST.get('grade_letter')
-        teacher_remark = request.POST.get('teacher_remark', 'Good performance.')
-
-        active_term = AcademicTerm.objects.filter(id=term_id).first() or AcademicTerm.objects.filter(is_active=True).first()
-        student_user = get_object_or_404(User, id=student_id)
-
-        # Get or create course if typed
-        if course_name:
-            default_class = student_user.profile.assigned_class if hasattr(student_user, 'profile') and student_user.profile.assigned_class else ClassLevel.objects.first()
-            course_obj, _ = Course.objects.get_or_create(
-                name=course_name.strip(),
-                defaults={'code': f"CRS-{uuid.uuid4().hex[:4].upper()}", 'class_level': default_class}
-            )
-
-            Grade.objects.update_or_create(
-                student=student_user,
-                course=course_obj,
-                term=active_term,
-                defaults={
-                    'score': score,
-                    'grade_letter': grade_letter,
-                    'teacher_remark': teacher_remark
-                }
-            )
-            messages.success(request, f'Result uploaded for {student_user.get_full_name()} in {course_obj.name}.')
-        else:
-            messages.error(request, 'Please specify or select a course.')
-
-        return redirect('portal:academics_view')
-
-@login_required
-def upload_fees_view(request):
-    """Debit (Billed Fee) / Credit (Payment Adjustment) Fee Edit View"""
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
-        messages.error(request, 'Only Admins can edit fee ledgers.')
-        return redirect('portal:finance_view')
-
-    if request.method == 'POST':
-        student_id = request.POST.get('student_id')
-        term_id = request.POST.get('term_id')
-        action_type = request.POST.get('action_type')  # DEBIT or CREDIT
-        amount = float(request.POST.get('amount', 0.00))
-
-        term = get_object_or_404(AcademicTerm, id=term_id)
-        fee_record, created = FeeRecord.objects.get_or_create(
-            student_id=student_id,
-            term=term,
-            defaults={'amount_due': 0.00, 'amount_paid': 0.00}
-        )
-
-        if action_type == 'DEBIT':
-            fee_record.amount_due = float(fee_record.amount_due) + amount
-            messages.success(request, f'Debited GHS {amount:.2f} (Fee Bill) to student ledger.')
-        elif action_type == 'CREDIT':
-            fee_record.amount_paid = float(fee_record.amount_paid) + amount
-            receipt = f"REC-{uuid.uuid4().hex[:8].upper()}"
-            PaymentTransaction.objects.create(
-                fee_record=fee_record,
-                amount=amount,
-                receipt_number=receipt,
-                payment_method='Credit Adjustment / Payment'
-            )
-            messages.success(request, f'Credited GHS {amount:.2f} (Payment/Credit) to student ledger. Receipt #{receipt}')
-
-        fee_record.save()
-        return redirect('portal:finance_view')
 
 @login_required
 def record_payment_view(request):
