@@ -52,6 +52,43 @@ def dashboard(request):
     return render(request, 'portal/dashboard.html', context)
 
 @login_required
+def update_branding_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
+        messages.error(request, 'Access restricted to Admin.')
+        return redirect('portal:portal_dashboard')
+
+    branding = SchoolBranding.objects.first() or SchoolBranding.objects.create()
+    if request.method == 'POST':
+        branding.school_name = request.POST.get('school_name', branding.school_name)
+        branding.logo_text = request.POST.get('logo_text', branding.logo_text)
+        branding.contact_email = request.POST.get('contact_email', branding.contact_email)
+        branding.contact_phone = request.POST.get('contact_phone', branding.contact_phone)
+        branding.address = request.POST.get('address', branding.address)
+        branding.website_url = request.POST.get('website_url', branding.website_url)
+        branding.whatsapp_number = request.POST.get('whatsapp_number', branding.whatsapp_number)
+        
+        # Color Customization
+        branding.primary_color = request.POST.get('primary_color', branding.primary_color)
+        branding.secondary_color = request.POST.get('secondary_color', branding.secondary_color)
+        branding.accent_color = request.POST.get('accent_color', branding.accent_color)
+        
+        # Advanced Features
+        branding.banner_announcement = request.POST.get('banner_announcement', branding.banner_announcement)
+        branding.enable_top_banner = request.POST.get('enable_top_banner') == 'on'
+        branding.footer_copyright = request.POST.get('footer_copyright', branding.footer_copyright)
+        
+        if request.FILES.get('logo_image'):
+            branding.logo_image = request.FILES.get('logo_image')
+            
+        branding.save()
+        messages.success(request, 'Portal branding settings updated successfully across all views!')
+        return redirect('portal:update_branding')
+
+    context = get_common_context(request)
+    context['active_tab'] = 'branding'
+    return render(request, 'portal/branding.html', context)
+
+@login_required
 def upload_results_view(request):
     if not hasattr(request.user, 'profile') or request.user.profile.role not in ['ADMIN', 'TEACHER']:
         messages.error(request, 'Unauthorized to upload results.')
@@ -65,7 +102,6 @@ def upload_results_view(request):
         grade_letter = request.POST.get('grade_letter')
         teacher_remark = request.POST.get('teacher_remark', 'Good performance.')
 
-        # Resolve or create AcademicTerm from typed/selected text
         term_obj, _ = AcademicTerm.objects.get_or_create(
             trimester=term_input.strip(),
             defaults={'year': '2026/2027', 'is_active': True}
@@ -90,7 +126,7 @@ def upload_results_view(request):
                     'teacher_remark': teacher_remark
                 }
             )
-            messages.success(request, f'Result uploaded for {student_user.get_full_name()} in {course_obj.name} ({term_obj.trimester}).')
+            messages.success(request, f'Result uploaded for {student_user.get_full_name()} in {course_obj.name}.')
         else:
             messages.error(request, 'Please specify or select a course.')
 
@@ -221,33 +257,6 @@ def record_payment_view(request):
         )
         messages.success(request, f'Payment of GHS {amount} saved. Receipt #{receipt}')
         return redirect('portal:finance_view')
-
-@login_required
-def update_branding_view(request):
-    if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
-        messages.error(request, 'Access restricted to Admin.')
-        return redirect('portal:portal_dashboard')
-
-    branding = SchoolBranding.objects.first() or SchoolBranding.objects.create()
-    if request.method == 'POST':
-        branding.school_name = request.POST.get('school_name', branding.school_name)
-        branding.logo_text = request.POST.get('logo_text', branding.logo_text)
-        branding.contact_email = request.POST.get('contact_email', branding.contact_email)
-        branding.contact_phone = request.POST.get('contact_phone', branding.contact_phone)
-        branding.address = request.POST.get('address', branding.address)
-        branding.primary_color = request.POST.get('primary_color', branding.primary_color)
-        branding.secondary_color = request.POST.get('secondary_color', branding.secondary_color)
-        
-        if request.FILES.get('logo_image'):
-            branding.logo_image = request.FILES.get('logo_image')
-            
-        branding.save()
-        messages.success(request, 'School branding & contact details updated permanently.')
-        return redirect('portal:update_branding')
-
-    context = get_common_context(request)
-    context['active_tab'] = 'branding'
-    return render(request, 'portal/branding.html', context)
 
 @login_required
 def report_card_view(request, student_id, term_id):

@@ -19,14 +19,28 @@ class Course(models.Model):
         return f"{self.name} ({self.class_level.name})"
 
 class SchoolBranding(models.Model):
+    # Basic School Info
     school_name = models.CharField(max_length=255, default='Al-Wasilah School Complex')
     logo_text = models.CharField(max_length=100, default='Al-Wasilah Portal')
     logo_image = models.ImageField(upload_to='branding/', null=True, blank=True)
+    
+    # Contact Details
     contact_email = models.EmailField(default='info@alwasilah.edu.gh')
     contact_phone = models.CharField(max_length=20, default='+233 20 000 0000')
     address = models.CharField(max_length=255, default='Tamale, Ghana')
-    primary_color = models.CharField(max_length=7, default='#581c87')
-    secondary_color = models.CharField(max_length=7, default='#2e1065')
+    website_url = models.URLField(default='https://alwasilah.edu.gh', blank=True)
+    whatsapp_number = models.CharField(max_length=20, default='+233 20 000 0000', blank=True)
+
+    # Color Theme Customization
+    primary_color = models.CharField(max_length=7, default='#581c87')      # Deep Purple
+    secondary_color = models.CharField(max_length=7, default='#2e1065')    # Dark Indigo
+    accent_color = models.CharField(max_length=7, default='#eab308')       # Gold/Yellow accent
+
+    # Advanced Branding Features
+    banner_announcement = models.CharField(max_length=255, default='Welcome to the official Al-Wasilah Portal!', blank=True)
+    enable_top_banner = models.BooleanField(default=True)
+    footer_copyright = models.CharField(max_length=255, default='© 2026 Al-Wasilah School Complex. All Rights Reserved.', blank=True)
+    
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -151,14 +165,11 @@ class Announcement(models.Model):
     target_class = models.ForeignKey(ClassLevel, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-# --------------------------------------------------------------------------
-# Django Signals: Automatically Assign ADMIN Role to Superusers
-# --------------------------------------------------------------------------
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
         role = 'ADMIN' if instance.is_superuser else 'STUDENT'
-        UserProfile.objects.create(user=instance, role=role)
+        UserProfile.objects.get_or_create(user=instance, defaults={'role': role})
     else:
         if instance.is_superuser and hasattr(instance, 'profile'):
             if instance.profile.role != 'ADMIN':
