@@ -3,5 +3,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('portal.urls', namespace='portal')),
+    path('portal/', include('portal.urls', namespace='portal')),
+    path('', include('portal.urls')),  # Redirects root URL directly to portal views
 ]
