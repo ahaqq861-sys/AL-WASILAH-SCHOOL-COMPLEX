@@ -57,7 +57,6 @@ def register_user_view(request):
         messages.error(request, 'Only Admins can register new users.')
         return redirect('portal:portal_dashboard')
 
-    # Ensure default classes exist so the dropdown is never empty
     if not ClassLevel.objects.exists():
         for default_cls in ['Basic 1', 'Basic 2', 'Basic 3', 'JHS 1', 'JHS 2', 'JHS 3']:
             ClassLevel.objects.get_or_create(name=default_cls)
@@ -71,8 +70,7 @@ def register_user_view(request):
         gender = request.POST.get('gender')
         phone = request.POST.get('phone_number')
         study_status = request.POST.get('study_status', 'ACTIVE')
-        class_id = request.POST.get('assigned_class')
-        course_ids = request.POST.getlist('assigned_courses')
+        class_input = request.POST.get('assigned_class_input')
         passport = request.FILES.get('passport_picture')
 
         generated_username = request.POST.get('username') or f"{first_name.lower().strip()}{uuid.uuid4().hex[:4]}"
@@ -81,7 +79,6 @@ def register_user_view(request):
         if User.objects.filter(username=generated_username).exists():
             messages.error(request, 'Username / Index Number already exists.')
         else:
-            # 1. Create User (Signal automatically creates UserProfile)
             user = User.objects.create_user(
                 username=generated_username, 
                 password=generated_password, 
@@ -89,7 +86,6 @@ def register_user_view(request):
                 last_name=last_name
             )
             
-            # 2. Safely update the auto-created profile instead of using .create()
             profile, created = UserProfile.objects.get_or_create(user=user)
             profile.role = role
             profile.date_of_birth = dob if dob else None
@@ -104,10 +100,10 @@ def register_user_view(request):
             profile.guardian_email = request.POST.get('guardian_email', '')
             profile.guardian_relationship = request.POST.get('guardian_relationship', '')
 
-            if role == 'STUDENT' and class_id:
-                profile.assigned_class = ClassLevel.objects.filter(id=class_id).first()
-            elif role == 'TEACHER':
-                profile.assigned_courses.set(Course.objects.filter(id__in=course_ids))
+            # Support for selection or custom typed class
+            if role == 'STUDENT' and class_input:
+                class_obj, _ = ClassLevel.objects.get_or_create(name=class_input.strip())
+                profile.assigned_class = class_obj
             
             profile.save()
 
@@ -124,6 +120,101 @@ def register_user_view(request):
     context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user', 'assigned_class')
     context['teachers'] = UserProfile.objects.filter(role='TEACHER').select_related('user')
     return render(request, 'portal/register_user.html', context)
+
+@login_required
+def upload_results_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role not in ['ADMIN', 'TEACHER']:
+        messages.error(request, 'Unauthorized to upload results.')
+        return redirect('portal:portal_dashboard')
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        course_name = request.POST.get('course_name_input')
+        term_id = request.POST.get('term_id')
+        score = request.POST.get('score')
+        grade_letter = request.POST.get('grade_letter')
+        teacher_remark = request.POST.get('teacher_remark', 'Good performance.')
+
+        active_term = AcademicTerm.objects.filter(id=term_id).first() or AcademicTerm.objects.filter(is_active=True).first()
+        student_user = get_object_or_404(User, id=student_id)
+
+        # Get or create course if typed
+        if course_name:
+            default_class = student_user.profile.assigned_class if hasattr(student_user, 'profile') and student_user.profile.assigned_class else ClassLevel.objects.first()
+            course_obj, _ = Course.objects.get_or_create(
+                name=course_name.strip(),
+                defaults={'code': f"CRS-{uuid.uuid4().hex[:4].upper()}", 'class_level': default_class}
+            )
+
+            Grade.objects.update_or_create(
+                student=student_user,
+                course=course_obj,
+                term=active_term,
+                defaults={
+                    'score': score,
+                    'grade_letter': grade_letter,
+                    'teacher_remark': teacher_remark
+                }
+            )
+            messages.success(request, f'Result uploaded for {student_user.get_full_name()} in {course_obj.name}.')
+        else:
+            messages.error(request, 'Please specify or select a course.')
+
+        return redirect('portal:academics_view')
+
+@login_required
+def upload_fees_view(request):
+    """Debit (Billed Fee) / Credit (Payment Adjustment) Fee Edit View"""
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
+        messages.error(request, 'Only Admins can edit fee ledgers.')
+        return redirect('portal:finance_view')
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        term_id = request.POST.get('term_id')
+        action_type = request.POST.get('action_type')  # DEBIT or CREDIT
+        amount = float(request.POST.get('amount', 0.00))
+
+        term = get_object_or_404(AcademicTerm, id=term_id)
+        fee_record, created = FeeRecord.objects.get_or_create(
+            student_id=student_id,
+            term=term,
+            defaults={'amount_due': 0.00, 'amount_paid': 0.00}
+        )
+
+        if action_type == 'DEBIT':
+            fee_record.amount_due = float(fee_record.amount_due) + amount
+            messages.success(request, f'Debited GHS {amount:.2f} (Fee Bill) to student ledger.')
+        elif action_type == 'CREDIT':
+            fee_record.amount_paid = float(fee_record.amount_paid) + amount
+            receipt = f"REC-{uuid.uuid4().hex[:8].upper()}"
+            PaymentTransaction.objects.create(
+                fee_record=fee_record,
+                amount=amount,
+                receipt_number=receipt,
+                payment_method='Credit Adjustment / Payment'
+            )
+            messages.success(request, f'Credited GHS {amount:.2f} (Payment/Credit) to student ledger. Receipt #{receipt}')
+
+        fee_record.save()
+        return redirect('portal:finance_view')
+
+@login_required
+def record_payment_view(request):
+    if request.method == 'POST':
+        fee = get_object_or_404(FeeRecord, id=request.POST.get('fee_record_id'))
+        amount = float(request.POST.get('amount'))
+        fee.amount_paid = float(fee.amount_paid) + amount
+        fee.save()
+        receipt = f"REC-{uuid.uuid4().hex[:8].upper()}"
+        PaymentTransaction.objects.create(
+            fee_record=fee,
+            amount=amount,
+            receipt_number=receipt,
+            payment_method=request.POST.get('payment_method', 'Cash')
+        )
+        messages.success(request, f'Payment of GHS {amount} saved. Receipt #{receipt}')
+        return redirect('portal:finance_view')
 
 @login_required
 def update_branding_view(request):
@@ -191,43 +282,23 @@ def attendance_view(request):
     return render(request, 'portal/attendance.html', context)
 
 @login_required
-def upload_results_view(request):
-    if request.method == 'POST':
-        Grade.objects.update_or_create(
-            student_id=request.POST.get('student_id'),
-            course_id=request.POST.get('course_id'),
-            term_id=request.POST.get('term_id'),
-            defaults={
-                'score': request.POST.get('score'),
-                'grade_letter': request.POST.get('grade_letter'),
-                'teacher_remark': request.POST.get('teacher_remark', 'Good performance.')
-            }
-        )
-        messages.success(request, 'Grade recorded.')
-        return redirect('portal:academics_view')
+def academics_view(request):
+    context = get_common_context(request)
+    context['active_tab'] = 'academics'
+    context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user', 'assigned_class')
+    context['courses'] = Course.objects.all()
+    context['terms'] = AcademicTerm.objects.all()
+    context['grades'] = Grade.objects.select_related('student', 'course', 'term').all()
+    return render(request, 'portal/academics.html', context)
 
 @login_required
-def record_payment_view(request):
-    if request.method == 'POST':
-        fee = get_object_or_404(FeeRecord, id=request.POST.get('fee_record_id'))
-        amount = float(request.POST.get('amount'))
-        fee.amount_paid = float(fee.amount_paid) + amount
-        fee.save()
-        receipt = f"REC-{uuid.uuid4().hex[:8].upper()}"
-        PaymentTransaction.objects.create(fee_record=fee, amount=amount, receipt_number=receipt, payment_method=request.POST.get('payment_method', 'Cash'))
-        messages.success(request, f'Payment of GHS {amount} saved. Receipt #{receipt}')
-        return redirect('portal:finance_view')
-
-@login_required
-def upload_fees_view(request):
-    if request.method == 'POST':
-        FeeRecord.objects.update_or_create(
-            student_id=request.POST.get('student_id'),
-            term_id=request.POST.get('term_id'),
-            defaults={'amount_due': request.POST.get('amount_due')}
-        )
-        messages.success(request, 'Fee record updated.')
-        return redirect('portal:finance_view')
+def finance_view(request):
+    context = get_common_context(request)
+    context['active_tab'] = 'finance'
+    context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user')
+    context['terms'] = AcademicTerm.objects.all()
+    context['fee_records'] = FeeRecord.objects.select_related('student', 'term').prefetch_related('transactions').all()
+    return render(request, 'portal/finance.html', context)
 
 @login_required
 def create_announcement_view(request):
@@ -249,25 +320,6 @@ def timetable_view(request):
     context['classes'] = ClassLevel.objects.all()
     context['courses'] = Course.objects.all()
     return render(request, 'portal/timetable.html', context)
-
-@login_required
-def academics_view(request):
-    context = get_common_context(request)
-    context['active_tab'] = 'academics'
-    context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user', 'assigned_class')
-    context['courses'] = Course.objects.all()
-    context['terms'] = AcademicTerm.objects.all()
-    context['grades'] = Grade.objects.select_related('student', 'course', 'term').all()
-    return render(request, 'portal/academics.html', context)
-
-@login_required
-def finance_view(request):
-    context = get_common_context(request)
-    context['active_tab'] = 'finance'
-    context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user')
-    context['terms'] = AcademicTerm.objects.all()
-    context['fee_records'] = FeeRecord.objects.select_related('student', 'term').prefetch_related('transactions').all()
-    return render(request, 'portal/finance.html', context)
 
 @login_required
 def profile_view(request):

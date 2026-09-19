@@ -27,7 +27,6 @@
                 </div>
             </div>
 
-            <!-- Profile & Personal Details -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">Date of Birth</label>
@@ -50,7 +49,6 @@
                 </div>
             </div>
 
-            <!-- Study Status, Class, & Passport Photo -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">Study Status</label>
@@ -61,11 +59,14 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">Assigned Class (Students)</label>
-                    <select name="assigned_class" class="w-full p-2 border rounded">
-                        <option value="">-- Select Class --</option>
-                        {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
-                    </select>
+                    <!-- Datalist Input: Allows selecting existing class OR typing custom class name -->
+                    <label class="block font-bold text-gray-700 mb-1">Assigned Class (Select or Type New)</label>
+                    <input list="class_list" name="assigned_class_input" placeholder="e.g. Basic 1 or Type Class..." class="w-full p-2 border rounded bg-white">
+                    <datalist id="class_list">
+                        {% for c in classes %}
+                        <option value="{{ c.name }}">
+                        {% endfor %}
+                    </datalist>
                 </div>
                 <div>
                     <label class="block font-bold text-gray-700 mb-1">Upload Passport Photo</label>
@@ -73,25 +74,23 @@
                 </div>
             </div>
 
-            <!-- Student Guardian Section -->
             <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
                 <h3 class="font-bold text-purple-950 mb-2">Guardian Information (Students Only)</h3>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <input type="text" name="guardian_name" placeholder="Guardian Name" class="p-2 border rounded">
                     <input type="text" name="guardian_phone" placeholder="Guardian Phone" class="p-2 border rounded">
                     <input type="email" name="guardian_email" placeholder="Guardian Email" class="p-2 border rounded">
-                    <input type="text" name="guardian_relationship" placeholder="Relationship (e.g. Father)" class="p-2 border rounded">
+                    <input type="text" name="guardian_relationship" placeholder="Relationship" class="p-2 border rounded">
                 </div>
             </div>
 
-            <!-- Custom or Auto-Generated Credentials -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">Login Username / Index (Leave blank for Auto-Generate)</label>
+                    <label class="block font-bold text-gray-700 mb-1">Login Username / Index (Auto-generated if empty)</label>
                     <input type="text" name="username" placeholder="Auto-generated if empty" class="w-full p-2 border rounded">
                 </div>
                 <div>
-                    <label class="block font-bold text-gray-700 mb-1">Password (Leave blank for Auto-Generate)</label>
+                    <label class="block font-bold text-gray-700 mb-1">Password (Auto-generated if empty)</label>
                     <input type="text" name="password" placeholder="Auto-generated if empty" class="w-full p-2 border rounded">
                 </div>
             </div>
@@ -100,7 +99,6 @@
         </form>
     </div>
 
-    <!-- Active Registry Table -->
     <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
         <h3 class="font-bold text-sm text-gray-800 mb-3">Registered Portal Members</h3>
         <table class="w-full text-left text-xs">

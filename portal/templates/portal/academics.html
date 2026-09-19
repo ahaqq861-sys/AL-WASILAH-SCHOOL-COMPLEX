@@ -1,44 +1,109 @@
 {% extends 'portal/base.html' %}
 
 {% block content %}
-<div class="space-y-6">
-    <h1 class="text-2xl font-bold text-gray-800">Academics Module</h1>
+<div class="space-y-6 text-xs">
+    {% if user_profile.role == 'ADMIN' or user_profile.role == 'TEACHER' %}
+    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+        <h2 class="text-base font-bold text-purple-950 mb-4">Upload Academic Results</h2>
 
-    {% if user_profile.role == 'TEACHER' %}
-    <div class="bg-white p-6 rounded-lg shadow border border-purple-200">
-        <h2 class="text-lg font-bold text-purple-900 mb-2">Request Portal Modification</h2>
-        <p class="text-xs text-gray-500 mb-4">Lecturers require Admin approval before changes take effect.</p>
-        <form method="POST" action="{% url 'portal:submit_mod' %}" class="space-y-3">
+        <form method="POST" action="{% url 'portal:upload_results' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
             {% csrf_token %}
-            <input type="text" name="title" placeholder="Modification Title (e.g. Update Grade Schedule)" required class="w-full p-2 border border-gray-300 rounded text-sm">
-            <textarea name="description" placeholder="Describe requested modification details..." required class="w-full p-2 border border-gray-300 rounded text-sm h-24"></textarea>
-            <button type="submit" class="px-4 py-2 bg-purple-800 text-white font-bold rounded text-xs hover:bg-purple-900">Submit for Admin Approval</button>
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Select Student *</label>
+                <input list="students_list" name="student_id_search" placeholder="Type student name/index..." class="w-full p-2 border rounded bg-white">
+                <datalist id="students_list">
+                    {% for s in students %}
+                    <option value="{{ s.user.id }}">{{ s.user.get_full_name }} ({{ s.index_number }})</option>
+                    {% endfor %}
+                </datalist>
+                <input type="hidden" name="student_id" id="real_student_id">
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Subject / Course (Select or Type) *</label>
+                <input list="courses_list" name="course_name_input" placeholder="e.g. Mathematics or Type Subject..." class="w-full p-2 border rounded bg-white" required>
+                <datalist id="courses_list">
+                    {% for c in courses %}
+                    <option value="{{ c.name }}">
+                    {% endfor %}
+                </datalist>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Academic Term *</label>
+                <select name="term_id" class="w-full p-2 border rounded bg-white" required>
+                    {% for t in terms %}
+                    <option value="{{ t.id }}" {% if t.is_active %}selected{% endif %}>{{ t.year }} - {{ t.trimester }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Score (0 - 100) *</label>
+                <input type="number" step="0.01" name="score" placeholder="e.g. 85.5" required class="w-full p-2 border rounded">
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Grade Letter *</label>
+                <input type="text" name="grade_letter" placeholder="e.g. A, B+, C" required class="w-full p-2 border rounded">
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1">Teacher Remark</label>
+                <input type="text" name="teacher_remark" placeholder="e.g. Excellent progress" class="w-full p-2 border rounded">
+            </div>
+
+            <div class="md:col-span-3">
+                <button type="submit" class="w-full py-2 bg-purple-900 text-white font-bold rounded hover:bg-purple-950">Save & Upload Result</button>
+            </div>
         </form>
     </div>
     {% endif %}
 
-    <div class="bg-white rounded-lg shadow p-4 border border-gray-200">
-        <h2 class="font-bold text-gray-700 mb-3 text-sm">Registered Enrolled Students</h2>
-        <table class="w-full text-left text-xs">
-            <thead class="bg-purple-50 text-purple-900 font-bold">
+    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+        <h3 class="font-bold text-sm text-gray-800 mb-3">Academic Grades Ledger</h3>
+        <table class="w-full text-left border-collapse">
+            <thead class="bg-purple-100 text-purple-950 font-bold">
                 <tr>
-                    <th class="p-3">#</th>
-                    <th class="p-3">Full Name</th>
-                    <th class="p-3">Index Number</th>
+                    <th class="p-2 border">Student</th>
+                    <th class="p-2 border">Course / Subject</th>
+                    <th class="p-2 border">Term</th>
+                    <th class="p-2 border">Score</th>
+                    <th class="p-2 border">Grade</th>
+                    <th class="p-2 border">Remark</th>
+                    <th class="p-2 border">Report Card</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for student in students %}
+            <tbody class="divide-y">
+                {% for g in grades %}
                 <tr>
-                    <td class="p-3 font-semibold">{{ forloop.counter }}</td>
-                    <td class="p-3 font-bold">{{ student.full_name }}</td>
-                    <td class="p-3">{{ student.index_number }}</td>
+                    <td class="p-2 border font-semibold">{{ g.student.get_full_name|default:g.student.username }}</td>
+                    <td class="p-2 border">{{ g.course.name }}</td>
+                    <td class="p-2 border">{{ g.term.trimester }}</td>
+                    <td class="p-2 border font-bold text-purple-900">{{ g.score }}</td>
+                    <td class="p-2 border"><span class="px-2 py-0.5 bg-green-100 text-green-800 font-bold rounded">{{ g.grade_letter }}</span></td>
+                    <td class="p-2 border text-gray-600">{{ g.teacher_remark }}</td>
+                    <td class="p-2 border">
+                        <a href="{% url 'portal:report_card' g.student.id g.term.id %}" target="_blank" class="text-purple-700 font-bold hover:underline">View Card</a>
+                    </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="3" class="p-4 text-center text-gray-400">No students found.</td></tr>
+                <tr><td colspan="7" class="p-4 text-center text-gray-500">No grades recorded yet.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
+
+<script>
+    document.querySelector('input[name="student_id_search"]').addEventListener('input', function(e) {
+        const val = e.target.value;
+        const listOptions = document.querySelectorAll('#students_list option');
+        listOptions.forEach(option => {
+            if (option.value === val) {
+                document.getElementById('real_student_id').value = val;
+            }
+        });
+    });
+</script>
 {% endblock %}
