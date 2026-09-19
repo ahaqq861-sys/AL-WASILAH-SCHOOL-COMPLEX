@@ -1,6 +1,8 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class ClassLevel(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -52,7 +54,7 @@ class UserProfile(models.Model):
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='STUDENT')
     index_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
     
-    # Personal Information
+    # Personal Details
     date_of_birth = models.DateField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=SEX_CHOICES, default='MALE')
     gender = models.CharField(max_length=20, default='Male')
@@ -60,7 +62,7 @@ class UserProfile(models.Model):
     passport_picture = models.ImageField(upload_to='passports/', null=True, blank=True)
     study_status = models.CharField(max_length=20, choices=STUDY_STATUS_CHOICES, default='ACTIVE')
     
-    # Class & Course Assignments
+    # Class & Course Relationships
     assigned_class = models.ForeignKey(ClassLevel, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_students')
     assigned_courses = models.ManyToManyField(Course, blank=True, related_name='assigned_teachers')
     children = models.ManyToManyField(User, blank=True, related_name='guardians')
@@ -148,3 +150,17 @@ class Announcement(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     target_class = models.ForeignKey(ClassLevel, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+# --------------------------------------------------------------------------
+# Django Signals: Automatically Assign ADMIN Role to Superusers
+# --------------------------------------------------------------------------
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    if created:
+        role = 'ADMIN' if instance.is_superuser else 'STUDENT'
+        UserProfile.objects.create(user=instance, role=role)
+    else:
+        if instance.is_superuser and hasattr(instance, 'profile'):
+            if instance.profile.role != 'ADMIN':
+                instance.profile.role = 'ADMIN'
+                instance.profile.save()
