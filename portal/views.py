@@ -57,6 +57,11 @@ def register_user_view(request):
         messages.error(request, 'Only Admins can register new users.')
         return redirect('portal:portal_dashboard')
 
+    # Ensure default classes exist so the dropdown is never empty
+    if not ClassLevel.objects.exists():
+        for default_cls in ['Basic 1', 'Basic 2', 'Basic 3', 'JHS 1', 'JHS 2', 'JHS 3']:
+            ClassLevel.objects.get_or_create(name=default_cls)
+
     if request.method == 'POST':
         role = request.POST.get('role')
         first_name = request.POST.get('first_name')
@@ -68,17 +73,15 @@ def register_user_view(request):
         study_status = request.POST.get('study_status', 'ACTIVE')
         class_id = request.POST.get('assigned_class')
         course_ids = request.POST.getlist('assigned_courses')
-        
-        # Passport Picture Upload
         passport = request.FILES.get('passport_picture')
 
-        # Generate Login Credentials
         generated_username = request.POST.get('username') or f"{first_name.lower().strip()}{uuid.uuid4().hex[:4]}"
         generated_password = request.POST.get('password') or f"Pass@{uuid.uuid4().hex[:6]}"
 
         if User.objects.filter(username=generated_username).exists():
             messages.error(request, 'Username / Index Number already exists.')
         else:
+            # 1. Create User (Signal automatically creates UserProfile)
             user = User.objects.create_user(
                 username=generated_username, 
                 password=generated_password, 
@@ -86,30 +89,31 @@ def register_user_view(request):
                 last_name=last_name
             )
             
-            profile = UserProfile.objects.create(
-                user=user,
-                role=role,
-                date_of_birth=dob if dob else None,
-                sex=sex,
-                gender=gender,
-                phone_number=phone,
-                study_status=study_status,
-                passport_picture=passport,
-                guardian_name=request.POST.get('guardian_name', ''),
-                guardian_phone=request.POST.get('guardian_phone', ''),
-                guardian_email=request.POST.get('guardian_email', ''),
-                guardian_relationship=request.POST.get('guardian_relationship', ''),
-            )
-            
+            # 2. Safely update the auto-created profile instead of using .create()
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            profile.role = role
+            profile.date_of_birth = dob if dob else None
+            profile.sex = sex
+            profile.gender = gender
+            profile.phone_number = phone
+            profile.study_status = study_status
+            if passport:
+                profile.passport_picture = passport
+            profile.guardian_name = request.POST.get('guardian_name', '')
+            profile.guardian_phone = request.POST.get('guardian_phone', '')
+            profile.guardian_email = request.POST.get('guardian_email', '')
+            profile.guardian_relationship = request.POST.get('guardian_relationship', '')
+
             if role == 'STUDENT' and class_id:
-                profile.assigned_class = ClassLevel.objects.get(id=class_id)
+                profile.assigned_class = ClassLevel.objects.filter(id=class_id).first()
             elif role == 'TEACHER':
                 profile.assigned_courses.set(Course.objects.filter(id__in=course_ids))
+            
             profile.save()
 
             messages.success(
                 request, 
-                f'Registered {role}: {first_name} {last_name} | Username: {generated_username} | Password: {generated_password} | Index: {profile.index_number}'
+                f'Successfully Registered {role}: {first_name} {last_name} | Username: {generated_username} | Password: {generated_password} | Index: {profile.index_number}'
             )
             return redirect('portal:register_user')
 
@@ -148,7 +152,6 @@ def update_branding_view(request):
     context['active_tab'] = 'branding'
     return render(request, 'portal/branding.html', context)
 
-# Re-use existing auxiliary views (report_card, attendance, upload_results, finance, etc.)
 @login_required
 def report_card_view(request, student_id, term_id):
     student = get_object_or_404(User, id=student_id)
