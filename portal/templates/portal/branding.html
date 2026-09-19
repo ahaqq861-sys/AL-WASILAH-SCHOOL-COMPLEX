@@ -2,28 +2,30 @@
 
 {% block content %}
 <div class="max-w-xl mx-auto bg-white p-6 rounded-lg shadow border border-gray-200">
-    <h2 class="text-xl font-bold text-purple-950 mb-4">Portal Branding & Colors</h2>
+    <h2 class="text-xl font-bold text-purple-950 mb-1">School Branding & Theme Configuration</h2>
+    <p class="text-xs text-gray-500 mb-4">Customize the portal display title and brand colors.</p>
+
     <form method="POST" class="space-y-4">
         {% csrf_token %}
         <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">School Name</label>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">School Name</label>
             <input type="text" name="school_name" value="{{ branding.school_name }}" class="w-full p-2 border rounded text-sm">
         </div>
         <div>
-            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Logo Text</label>
+            <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Logo Subtext / Slogan</label>
             <input type="text" name="logo_text" value="{{ branding.logo_text }}" class="w-full p-2 border rounded text-sm">
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-2">
             <div>
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Header Color</label>
-                <input type="color" name="primary_color" value="{{ branding.primary_color }}" class="w-full h-10 border rounded cursor-pointer">
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Primary Color</label>
+                <input type="color" name="primary_color" value="{{ branding.primary_color }}" class="w-full h-10 border rounded p-1">
             </div>
             <div>
-                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Sidebar Color</label>
-                <input type="color" name="secondary_color" value="{{ branding.secondary_color }}" class="w-full h-10 border rounded cursor-pointer">
+                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Secondary Color</label>
+                <input type="color" name="secondary_color" value="{{ branding.secondary_color }}" class="w-full h-10 border rounded p-1">
             </div>
         </div>
-        <button type="submit" class="w-full py-2 bg-purple-900 text-white font-bold rounded text-xs hover:bg-purple-950">Save Branding Settings</button>
+        <button type="submit" class="w-full py-2.5 bg-purple-900 text-white font-bold rounded text-xs hover:bg-purple-950">Save Branding Settings</button>
     </form>
 </div>
 {% endblock %}

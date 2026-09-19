@@ -3,13 +3,11 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from .models import UserProfile, SchoolBranding, PendingModification, StudentProfile, Grade, FeeRecord, AcademicTerm
+from .models import UserProfile, SchoolBranding, AcademicTerm, Grade, FeeRecord, ClassLevel, Course
 
 def get_common_context(request):
     active_term = AcademicTerm.objects.filter(is_active=True).first()
-    branding = SchoolBranding.objects.first()
-    if not branding:
-        branding = SchoolBranding.objects.create()
+    branding = SchoolBranding.objects.first() or SchoolBranding.objects.create()
     return {
         'active_term': active_term,
         'branding': branding,
@@ -27,7 +25,7 @@ def login_view(request):
             login(request, user)
             return redirect('portal:portal_dashboard')
         messages.error(request, 'Invalid username or password.')
-    return render(request, 'portal/login.html')
+    return render(request, 'portal/login.html', get_common_context(request))
 
 def logout_view(request):
     logout(request)
@@ -38,37 +36,90 @@ def dashboard(request):
     context = get_common_context(request)
     context.update({
         'active_tab': 'dashboard',
-        'total_students': StudentProfile.objects.count(),
-        'grades': Grade.objects.select_related('student', 'term')[:10],
-        'pending_approvals': PendingModification.objects.filter(is_approved=False),
+        'total_students': UserProfile.objects.filter(role='STUDENT').count(),
+        'grades': Grade.objects.select_related('student', 'course', 'term')[:10],
     })
     return render(request, 'portal/dashboard.html', context)
 
 @login_required
 def register_user_view(request):
-    # Only Admin can register students and teachers
     if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
-        messages.error(request, 'Access denied. Only Admins can register new users.')
+        messages.error(request, 'Only Admins can register students and teachers.')
         return redirect('portal:portal_dashboard')
 
     if request.method == 'POST':
         username = request.POST.get('username')
+        password = request.POST.get('password')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
-        password = request.POST.get('password')
         role = request.POST.get('role')
+        class_id = request.POST.get('assigned_class')
+        course_ids = request.POST.getlist('assigned_courses')
 
         if User.objects.filter(username=username).exists():
             messages.error(request, 'Username already exists.')
         else:
             user = User.objects.create_user(username=username, password=password, first_name=first_name, last_name=last_name)
-            UserProfile.objects.create(user=user, role=role)
-            messages.success(request, f'Successfully registered {role} account for {username}.')
-            return redirect('portal:portal_dashboard')
+            profile = UserProfile.objects.create(user=user, role=role)
+            
+            if role == 'STUDENT' and class_id:
+                profile.assigned_class = ClassLevel.objects.get(id=class_id)
+            elif role == 'TEACHER':
+                profile.assigned_courses.set(Course.objects.filter(id__in=course_ids))
+            profile.save()
+
+            messages.success(request, f'Successfully registered {role}: {username}')
+            return redirect('portal:register_user')
 
     context = get_common_context(request)
     context['active_tab'] = 'register'
+    context['classes'] = ClassLevel.objects.all()
+    context['courses'] = Course.objects.all()
     return render(request, 'portal/register_user.html', context)
+
+@login_required
+def upload_results_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role not in ['ADMIN', 'TEACHER']:
+        messages.error(request, 'Access denied.')
+        return redirect('portal:portal_dashboard')
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        course_id = request.POST.get('course_id')
+        term_id = request.POST.get('term_id')
+        score = request.POST.get('score')
+        letter = request.POST.get('grade_letter')
+
+        Grade.objects.create(
+            student_id=student_id,
+            course_id=course_id,
+            term_id=term_id,
+            score=score,
+            grade_letter=letter
+        )
+        messages.success(request, 'Academic result uploaded successfully.')
+        return redirect('portal:academics_view')
+
+@login_required
+def upload_fees_view(request):
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'ADMIN':
+        messages.error(request, 'Access restricted to Admin.')
+        return redirect('portal:portal_dashboard')
+
+    if request.method == 'POST':
+        student_id = request.POST.get('student_id')
+        term_id = request.POST.get('term_id')
+        amount_due = request.POST.get('amount_due')
+        amount_paid = request.POST.get('amount_paid')
+
+        FeeRecord.objects.create(
+            student_id=student_id,
+            term_id=term_id,
+            amount_due=amount_due,
+            amount_paid=amount_paid
+        )
+        messages.success(request, 'Trimester fee record uploaded.')
+        return redirect('portal:finance_view')
 
 @login_required
 def update_branding_view(request):
@@ -83,30 +134,12 @@ def update_branding_view(request):
         branding.primary_color = request.POST.get('primary_color', branding.primary_color)
         branding.secondary_color = request.POST.get('secondary_color', branding.secondary_color)
         branding.save()
-        messages.success(request, 'Branding updated successfully.')
+        messages.success(request, 'Branding updated.')
         return redirect('portal:update_branding')
 
     context = get_common_context(request)
     context['active_tab'] = 'branding'
     return render(request, 'portal/branding.html', context)
-
-@login_required
-def submit_modification_view(request):
-    if request.method == 'POST':
-        title = request.POST.get('title')
-        description = request.POST.get('description')
-        PendingModification.objects.create(teacher=request.user, title=title, description=description)
-        messages.success(request, 'Modification request submitted to Admin for approval.')
-        return redirect('portal:academics_view')
-
-@login_required
-def approve_modification_view(request, mod_id):
-    if hasattr(request.user, 'profile') and request.user.profile.role == 'ADMIN':
-        mod = get_object_or_404(PendingModification, id=mod_id)
-        mod.is_approved = True
-        mod.save()
-        messages.success(request, 'Modification request approved.')
-    return redirect('portal:portal_dashboard')
 
 @login_required
 def profile_view(request):
@@ -136,15 +169,19 @@ def help_view(request):
 def academics_view(request):
     context = get_common_context(request)
     context['active_tab'] = 'academics'
-    context['students'] = StudentProfile.objects.all()
-    context['pending_mods'] = PendingModification.objects.filter(teacher=request.user)
+    context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user', 'assigned_class')
+    context['courses'] = Course.objects.all()
+    context['terms'] = AcademicTerm.objects.all()
+    context['grades'] = Grade.objects.select_related('student', 'course', 'term').all()
     return render(request, 'portal/academics.html', context)
 
 @login_required
 def finance_view(request):
     context = get_common_context(request)
     context['active_tab'] = 'finance'
-    context['fee_records'] = FeeRecord.objects.all()
+    context['students'] = UserProfile.objects.filter(role='STUDENT').select_related('user')
+    context['terms'] = AcademicTerm.objects.all()
+    context['fee_records'] = FeeRecord.objects.select_related('student', 'term').all()
     return render(request, 'portal/finance.html', context)
 
 @login_required
