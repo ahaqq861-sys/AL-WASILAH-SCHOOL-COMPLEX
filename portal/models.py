@@ -21,23 +21,23 @@ class Course(models.Model):
 class SchoolBranding(models.Model):
     # Basic School Info
     school_name = models.CharField(max_length=255, default='Al-Wasilah School Complex')
-    logo_text = models.CharField(max_length=100, default='Al-Wasilah Portal')
+    logo_text = models.CharField(max_length=255, default='Al-Wasilah Portal')
     logo_image = models.ImageField(upload_to='branding/', null=True, blank=True)
     
-    # Contact Details
-    contact_email = models.EmailField(default='info@alwasilah.edu.gh')
-    contact_phone = models.CharField(max_length=20, default='+233 20 000 0000')
+    # Contact Details (Expanded max_length to allow multiple phone numbers & long addresses)
+    contact_email = models.EmailField(max_length=255, default='info@alwasilah.edu.gh')
+    contact_phone = models.CharField(max_length=100, default='+233 20 000 0000')
     address = models.CharField(max_length=255, default='Tamale, Ghana')
-    website_url = models.URLField(default='https://alwasilah.edu.gh', blank=True)
-    whatsapp_number = models.CharField(max_length=20, default='+233 20 000 0000', blank=True)
+    website_url = models.URLField(max_length=255, default='https://alwasilah.edu.gh', blank=True)
+    whatsapp_number = models.CharField(max_length=100, default='+233 20 000 0000', blank=True)
 
     # Color Theme Customization
-    primary_color = models.CharField(max_length=7, default='#581c87')      # Deep Purple
-    secondary_color = models.CharField(max_length=7, default='#2e1065')    # Dark Indigo
-    accent_color = models.CharField(max_length=7, default='#eab308')       # Gold/Yellow accent
+    primary_color = models.CharField(max_length=20, default='#581c87')
+    secondary_color = models.CharField(max_length=20, default='#2e1065')
+    accent_color = models.CharField(max_length=20, default='#eab308')
 
     # Advanced Branding Features
-    banner_announcement = models.CharField(max_length=255, default='Welcome to the official Al-Wasilah Portal!', blank=True)
+    banner_announcement = models.CharField(max_length=500, default='Welcome to the official Al-Wasilah Portal!', blank=True)
     enable_top_banner = models.BooleanField(default=True)
     footer_copyright = models.CharField(max_length=255, default='© 2026 Al-Wasilah School Complex. All Rights Reserved.', blank=True)
     
@@ -72,7 +72,7 @@ class UserProfile(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     sex = models.CharField(max_length=10, choices=SEX_CHOICES, default='MALE')
     gender = models.CharField(max_length=20, default='Male')
-    phone_number = models.CharField(max_length=20, blank=True)
+    phone_number = models.CharField(max_length=50, blank=True)
     passport_picture = models.ImageField(upload_to='passports/', null=True, blank=True)
     study_status = models.CharField(max_length=20, choices=STUDY_STATUS_CHOICES, default='ACTIVE')
     
@@ -83,7 +83,7 @@ class UserProfile(models.Model):
 
     # Student Guardian Details
     guardian_name = models.CharField(max_length=150, blank=True)
-    guardian_phone = models.CharField(max_length=20, blank=True)
+    guardian_phone = models.CharField(max_length=50, blank=True)
     guardian_email = models.EmailField(blank=True)
     guardian_relationship = models.CharField(max_length=50, blank=True)
 
@@ -103,7 +103,7 @@ class AcademicTerm(models.Model):
         ('Trimester 3', 'Trimester 3'),
     ]
     year = models.CharField(max_length=20, default='2026/2027')
-    trimester = models.CharField(max_length=20, choices=TRIMESTER_CHOICES, default='Trimester 1')
+    trimester = models.CharField(max_length=50, default='Trimester 1')
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -165,6 +165,9 @@ class Announcement(models.Model):
     target_class = models.ForeignKey(ClassLevel, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+# --------------------------------------------------------------------------
+# Django Signal: Safely Assign ADMIN Role to Superusers
+# --------------------------------------------------------------------------
 @receiver(post_save, sender=User)
 def create_or_update_user_profile(sender, instance, created, **kwargs):
     if created:
