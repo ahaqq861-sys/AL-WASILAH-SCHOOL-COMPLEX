@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Report Card - {{ student_user.first_name }} {{ student_user.last_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-3xl mx-auto bg-white p-8 rounded shadow border border-gray-300">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-purple-950">{{ branding.school_name }}</h1>
+                <p class="text-xs text-gray-500 font-semibold">{{ branding.logo_text }}</p>
+            </div>
+            <button onclick="window.print()" class="px-3 py-1 bg-purple-900 text-white font-bold rounded text-xs">Print Report Card</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-purple-50 p-3 rounded">
+            <div>
+                <p><span class="font-bold">Student Name:</span> {{ student_user.first_name }} {{ student_user.last_name }}</p>
+                <p><span class="font-bold">Class:</span> {{ student_user.profile.assigned_class.name }}</p>
+            </div>
+            <div>
+                <p><span class="font-bold">Academic Term:</span> {{ term.year }} - {{ term.trimester }}</p>
+                <p><span class="font-bold">Attendance:</span> {{ attendance_count }} / {{ total_days }} Days Present</p>
+            </div>
+        </div>
+
+        <table class="w-full text-left text-xs mb-6">
+            <thead class="bg-purple-900 text-white font-bold">
+                <tr>
+                    <th class="p-2">Subject / Course</th>
+                    <th class="p-2">Score (%)</th>
+                    <th class="p-2">Grade</th>
+                    <th class="p-2">Teacher Remark</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for grade in grades %}
+                <tr>
+                    <td class="p-2 font-bold">{{ grade.course.name }}</td>
+                    <td class="p-2">{{ grade.score }}%</td>
+                    <td class="p-2 font-bold">{{ grade.grade_letter }}</td>
+                    <td class="p-2 italic text-gray-600">{{ grade.teacher_remark }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="p-4 text-center text-gray-400">No grades uploaded for this term.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow border border-gray-200">
+    <h2 class="text-xl font-bold text-purple-950 mb-4">Mark Student Attendance</h2>
+
+    <form method="POST" class="space-y-4">
+        {% csrf_token %}
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Date</label>
+                <input type="date" name="date" required class="w-full p-2 border rounded text-xs">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Academic Term</label>
+                <select name="term_id" required class="w-full p-2 border rounded text-xs">
+                    {% for t in terms %}
+                    <option value="{{ t.id }}">{{ t.year }} - {{ t.trimester }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="border rounded p-3 bg-gray-50 max-h-64 overflow-y-auto space-y-2 text-xs">
+            {% for s in students %}
+            <div class="flex items-center justify-between border-b pb-1">
+                <span class="font-bold">{{ s.user.first_name }} {{ s.user.last_name }} ({{ s.assigned_class.name }})</span>
+                <select name="status_{{ s.user.id }}" class="p-1 border rounded font-semibold">
+                    <option value="PRESENT">Present</option>
+                    <option value="ABSENT">Absent</option>
+                    <option value="LATE">Late</option>
+                </select>
+            </div>
+            {% endfor %}
+        </div>
+
+        <button type="submit" class="w-full py-2 bg-purple-900 text-white font-bold rounded text-xs hover:bg-purple-950">Save Attendance Records</button>
+    </form>
+</div>
+{% endblock %}

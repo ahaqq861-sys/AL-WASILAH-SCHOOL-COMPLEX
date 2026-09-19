@@ -1,0 +1,57 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="space-y-6">
+    <h1 class="text-2xl font-bold text-gray-800">Class Timetables & Exam Schedules</h1>
+
+    {% if user_profile.role == 'ADMIN' %}
+    <div class="bg-white p-4 rounded-lg shadow border border-gray-200">
+        <h2 class="font-bold text-sm text-purple-900 mb-2">Add Timetable Slot</h2>
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
+            {% csrf_token %}
+            <select name="class_id" required class="p-2 border rounded">
+                {% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+            </select>
+            <select name="course_id" required class="p-2 border rounded">
+                {% for cr in courses %}<option value="{{ cr.id }}">{{ cr.name }}</option>{% endfor %}
+            </select>
+            <select name="day" required class="p-2 border rounded">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+            </select>
+            <input type="time" name="start_time" required class="p-2 border rounded">
+            <input type="time" name="end_time" required class="p-2 border rounded">
+            <button type="submit" class="bg-purple-900 text-white font-bold rounded p-2 hover:bg-purple-950">Add Slot</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded shadow p-4">
+        <table class="w-full text-left text-xs">
+            <thead class="bg-purple-100 text-purple-950 font-bold">
+                <tr>
+                    <th class="p-2">Class</th>
+                    <th class="p-2">Subject</th>
+                    <th class="p-2">Day</th>
+                    <th class="p-2">Time Slot</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                {% for s in schedules %}
+                <tr>
+                    <td class="p-2 font-bold">{{ s.class_level.name }}</td>
+                    <td class="p-2">{{ s.course.name }}</td>
+                    <td class="p-2">{{ s.day }}</td>
+                    <td class="p-2">{{ s.start_time }} - {{ s.end_time }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="p-4 text-center text-gray-400">No schedules created yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
