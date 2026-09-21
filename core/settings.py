@@ -94,3 +94,6 @@ CLOUDINARY_STORAGE = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Override default authentication redirect URLs
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/login/'
