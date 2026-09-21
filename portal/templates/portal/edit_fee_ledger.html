@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <h2>Edit Fee Ledger</h2>
+    {% if ledger %}
+    <p style="margin-top: 10px;"><strong>Student:</strong> {{ ledger.student.user.get_full_name|default:ledger.student.user.username }}</p>
+    <p><strong>Class:</strong> {{ ledger.academic_class.name }}</p>
+    <p><strong>Term:</strong> {{ ledger.term }}</p>
+
+    <form method="POST" style="margin-top: 20px;">
+        {% csrf_token %}
+        <div style="margin-bottom: 15px;">
+            <label>Total Fees (GH₵)</label>
+            <input type="number" step="0.01" name="total_fees" value="{{ ledger.total_fees }}" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;">
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label>Amount Paid (GH₵)</label>
+            <input type="number" step="0.01" name="amount_paid" value="{{ ledger.amount_paid }}" class="form-control" required style="width: 100%; padding: 8px; margin-top: 5px;">
+        </div>
+
+        <button type="submit" style="background: #800020; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Save Ledger</button>
+    </form>
+    {% else %}
+    <p>No ledger item specified.</p>
+    {% endif %}
+</div>
+{% endblock %}

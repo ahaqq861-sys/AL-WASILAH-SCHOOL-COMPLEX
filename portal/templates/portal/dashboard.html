@@ -2,39 +2,102 @@
 
 {% block content %}
 <style>
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
-    .stat-card { background: #fff; padding: 20px; border-radius: 6px; border-left: 5px solid var(--wine-primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .stat-card h3 { font-size: 1.6rem; color: var(--wine-primary); margin-top: 5px; }
-    .stat-card p { color: #666; font-size: 0.85rem; text-transform: uppercase; font-weight: bold; }
-    .info-card { background: #fff; padding: 25px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .info-card h4 { border-bottom: 2px solid var(--wine-primary); padding-bottom: 10px; margin-bottom: 15px; color: var(--wine-primary); }
+    .card-box { background: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .table-custom { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .table-custom th, .table-custom td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    .table-custom th { background-color: var(--wine-primary, #800020); color: white; }
+    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
 </style>
 
-<div class="dashboard-header">
-    <h2>Student Dashboard</h2>
-    <span class="badge" style="background:var(--wine-primary); color:#fff; padding: 8px 15px; border-radius: 4px; font-weight: bold;">
-        Current Class: {{ student_profile.current_class|default:"Basic 8" }}
-    </span>
-</div>
-
-<div class="stats-row">
-    <div class="stat-card">
-        <p>Current Class</p>
-        <h3>{{ student_profile.current_class|default:"Basic 8" }}</h3>
-    </div>
-    <div class="stat-card">
-        <p>Student Index No.</p>
-        <h3>{{ student_profile.index_number|default:"AWS/2026/012" }}</h3>
-    </div>
-    <div class="stat-card">
-        <p>Fee Outstanding</p>
-        <h3>GHS {{ student_profile.fee_balance|default:"0.00" }}</h3>
+<div class="dashboard-header card-box">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <h2>Welcome, {{ request.user.get_full_name|default:request.user.username }}</h2>
+            <p>Role: <strong>{{ user_profile.role }}</strong> | Class: <strong>{{ user_profile.assigned_class.name|default:"Unassigned" }}</strong></p>
+        </div>
+        {% if branding %}
+        <div style="text-align: right;">
+            {% if branding.logo_image %}
+                <img src="{{ branding.logo_image.url }}" alt="Logo" style="max-height: 60px;">
+            {% endif %}
+            <h3 style="margin: 0; color: #800020;">{{ branding.school_name }}</h3>
+            <small>{{ branding.current_academic_year }} - {{ branding.current_term }}</small>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<div class="info-card">
-    <h4><i class="fa fa-bullhorn"></i> School Announcements & Notices</h4>
-    <p>Welcome to your student portal. You can view your grades, class timetable, and fee statement using the sidebar menu. All details shown are read-only. For updates or record adjustments, please contact the school administration or your class teacher.</p>
+{% if user_profile.role == 'STUDENT' %}
+<div class="grid-2">
+    <!-- Courses Studied This Trimester -->
+    <div class="card-box">
+        <h3><i class="fa fa-book"></i> Enrolled Courses ({{ branding.current_term|default:"Current Term" }})</h3>
+        <ul style="list-style: none; padding: 0; margin-top: 10px;">
+            {% for course in courses %}
+                <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <strong>{{ course.code }}</strong> - {{ course.name }}
+                </li>
+            {% empty %}
+                <li>No courses assigned for this term.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Fee Ledger Summary -->
+    <div class="card-box">
+        <h3><i class="fa fa-wallet"></i> Fee Summary</h3>
+        {% if fee_ledger %}
+            <p style="margin-top: 10px;">Total Fees: <strong>GH₵ {{ fee_ledger.total_fees }}</strong></p>
+            <p>Amount Paid: <strong>GH₵ {{ fee_ledger.amount_paid }}</strong></p>
+            <p>Balance Due: <strong style="color: red;">GH₵ {{ fee_ledger.balance_due }}</strong></p>
+        {% else %}
+            <p style="margin-top: 10px;">No fee record found for this trimester.</p>
+        {% endif %}
+    </div>
 </div>
+
+<div class="grid-2">
+    <!-- Class Timetable -->
+    <div class="card-box">
+        <h3><i class="fa fa-calendar-alt"></i> Class Timetable</h3>
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Time</th>
+                    <th>Subject</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in timetable %}
+                <tr>
+                    <td>{{ entry.day_of_week }}</td>
+                    <td>{{ entry.time_slot }}</td>
+                    <td>{{ entry.subject }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3">No timetable available for your class.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Academic Calendar -->
+    <div class="card-box">
+        <h3><i class="fa fa-calendar-check"></i> Academic Calendar</h3>
+        <ul style="list-style: none; padding: 0; margin-top: 10px;">
+            {% for event in events %}
+                <li style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <strong>{{ event.event_date|date:"d M, Y" }}</strong>: {{ event.title }}
+                    {% if event.description %}<small style="display:block; color:#666;">{{ event.description }}</small>{% endif %}
+                </li>
+            {% empty %}
+                <li>No upcoming events scheduled.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
