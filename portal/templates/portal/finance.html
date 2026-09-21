@@ -1,94 +1,115 @@
-{% extends 'portal/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="space-y-6 text-xs">
-    {% if user_profile.role == 'ADMIN' %}
-    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
-        <h2 class="text-base font-bold text-purple-950 mb-4">Fee Billing & Ledger Adjustment (Debit / Credit)</h2>
+<style>
+    .print-actions { text-align: right; margin-bottom: 15px; }
+    .btn-print { background-color: var(--wine-primary); color: #fff; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    .printable-card { background: #fff; padding: 30px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #ddd; }
+    .document-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--wine-primary); padding-bottom: 15px; margin-bottom: 20px; }
+    .school-info { text-align: center; flex-grow: 1; }
+    .school-info h2 { color: var(--wine-primary); font-size: 1.4rem; text-transform: uppercase; }
+    .school-info h4 { color: #555; font-size: 1rem; }
+    .doc-logo { width: 80px; height: 80px; object-fit: contain; }
+    .passport-photo { width: 85px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; }
+    .details-table, .ledger-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .details-table td { padding: 6px 10px; font-size: 0.9rem; }
+    .details-table td.label { font-weight: bold; color: #444; width: 18%; background: #f9f9f9; }
+    .ledger-table th, .ledger-table td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 0.85rem; }
+    .ledger-table th { background-color: var(--wine-primary); color: #fff; }
+</style>
 
-        <form method="POST" action="{% url 'portal:upload_fees' %}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {% csrf_token %}
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Select Student *</label>
-                <select name="student_id" required class="w-full p-2 border rounded bg-white">
-                    {% for s in students %}
-                    <option value="{{ s.user.id }}">{{ s.user.get_full_name }} ({{ s.index_number }})</option>
-                    {% endfor %}
-                </select>
-            </div>
+<div class="print-actions no-print">
+    <button onclick="window.print()" class="btn-print"><i class="fa fa-print"></i> Print Fee Statement</button>
+</div>
 
-            <div>
-                <!-- Academic Term Editable Box -->
-                <label class="block font-bold text-gray-700 mb-1">Academic Term (Select or Type) *</label>
-                <input list="finance_terms_list" name="term_input" value="Trimester 1" placeholder="e.g. Trimester 1..." class="w-full p-2 border rounded bg-white" required>
-                <datalist id="finance_terms_list">
-                    {% for t in terms %}
-                    <option value="{{ t.trimester }}">
-                    {% empty %}
-                    <option value="Trimester 1">
-                    <option value="Trimester 2">
-                    <option value="Trimester 3">
-                    {% endfor %}
-                </datalist>
-            </div>
+<div class="printable-card">
+    <!-- Header with School Logo & Passport Photo -->
+    <div class="document-header">
+        {% if branding and branding.logo_image %}
+            <img src="{{ branding.logo_image.url }}" class="doc-logo" alt="School Logo">
+        {% else %}
+            <img src="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm" class="doc-logo" alt="School Logo">
+        {% endif %}
 
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Action Type *</label>
-                <select name="action_type" required class="w-full p-2 border rounded font-bold bg-white">
-                    <option value="DEBIT" class="text-red-700 font-bold">DEBIT (+ Add Fee Bill)</option>
-                    <option value="CREDIT" class="text-green-700 font-bold">CREDIT (- Record Payment / Credit)</option>
-                </select>
-            </div>
+        <div class="school-info">
+            <h2>{{ branding.school_name|default:"AL-WASILAH SCHOOL COMPLEX" }}</h2>
+            <h4>ACCOUNTS DEPARTMENT - STUDENT FEE LEDGER</h4>
+        </div>
 
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Amount (GHS) *</label>
-                <input type="number" step="0.01" name="amount" placeholder="0.00" required class="w-full p-2 border rounded">
-            </div>
-
-            <div class="md:col-span-4">
-                <button type="submit" class="w-full py-2 bg-purple-900 text-white font-bold rounded hover:bg-purple-950">Post Ledger Entry</button>
-            </div>
-        </form>
+        {% if student_profile and student_profile.passport_picture %}
+            <img src="{{ student_profile.passport_picture.url }}" class="passport-photo" alt="Passport Photo">
+        {% else %}
+            <img src="https://via.placeholder.com/85x100" class="passport-photo" alt="Passport Photo">
+        {% endif %}
     </div>
-    {% endif %}
 
-    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
-        <h3 class="font-bold text-sm text-gray-800 mb-3">Student Fee Statements</h3>
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-purple-100 text-purple-950 font-bold">
-                <tr>
-                    <th class="p-2 border">Student</th>
-                    <th class="p-2 border">Term</th>
-                    <th class="p-2 border">Billed (Debit)</th>
-                    <th class="p-2 border">Paid (Credit)</th>
-                    <th class="p-2 border">Balance Due</th>
-                    <th class="p-2 border">Quick Payment</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                {% for f in fee_records %}
-                <tr>
-                    <td class="p-2 border font-semibold">{{ f.student.get_full_name|default:f.student.username }}</td>
-                    <td class="p-2 border">{{ f.term.trimester }}</td>
-                    <td class="p-2 border font-bold text-red-700">GHS {{ f.amount_due }}</td>
-                    <td class="p-2 border font-bold text-green-700">GHS {{ f.amount_paid }}</td>
-                    <td class="p-2 border font-bold {% if f.balance_due > 0 %}text-red-600{% else %}text-green-600{% endif %}">
-                        GHS {{ f.balance_due }}
-                    </td>
-                    <td class="p-2 border">
-                        <form method="POST" action="{% url 'portal:record_payment' %}" class="flex items-center space-x-1">
-                            {% csrf_token %}
-                            <input type="hidden" name="fee_record_id" value="{{ f.id }}">
-                            <input type="number" step="0.01" name="amount" placeholder="GHS" required class="w-20 p-1 border rounded text-xs">
-                            <button type="submit" class="px-2 py-1 bg-green-700 text-white font-bold rounded text-[10px]">Pay</button>
-                        </form>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="6" class="p-4 text-center text-gray-500">No fee records found.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+    <!-- Student Details Table -->
+    <table class="details-table">
+        <tr>
+            <td class="label">STUDENT NAME:</td>
+            <td>{{ request.user.get_full_name|default:request.user.username|upper }}</td>
+            <td class="label">INDEX NUMBER:</td>
+            <td>{{ student_profile.index_number|default:"AWS/2026/012" }}</td>
+        </tr>
+        <tr>
+            <td class="label">CLASS:</td>
+            <td>{{ student_profile.current_class|default:"BASIC 8" }}</td>
+            <td class="label">GENDER:</td>
+            <td>{{ student_profile.gender|default:"MALE" }}</td>
+        </tr>
+        <tr>
+            <td class="label">ACADEMIC YEAR:</td>
+            <td>{{ branding.current_academic_year|default:"2026/2027" }}</td>
+            <td class="label">DATE:</td>
+            <td>{% now "d-M-Y" %}</td>
+        </tr>
+    </table>
+
+    <!-- Fee Ledger Table -->
+    <table class="ledger-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Academic Year</th>
+                <th>Billing (GHS)</th>
+                <th>Payment (GHS)</th>
+                <th>Narration</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ledger_entries %}
+            <tr>
+                <td>{{ item.date|date:"d-M-Y" }}</td>
+                <td>{{ item.academic_year }}</td>
+                <td>{{ item.billing|default:"0.00" }}</td>
+                <td>{{ item.payment|default:"0.00" }}</td>
+                <td>{{ item.narration }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td>01-Sep-2026</td>
+                <td>2026/2027</td>
+                <td>1,200.00</td>
+                <td>0.00</td>
+                <td>TERM 1 SCHOOL FEES BILLING</td>
+            </tr>
+            <tr>
+                <td>05-Sep-2026</td>
+                <td>2026/2027</td>
+                <td>0.00</td>
+                <td>1,200.00</td>
+                <td>PAYMENT: BANK DEPOSIT RECEIPT #98321</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="font-weight: bold; background: #f9f9f9;">
+                <td colspan="2" style="text-align: right;">TOTAL:</td>
+                <td>GHS 1,200.00</td>
+                <td>GHS 1,200.00</td>
+                <td>OUTSTANDING BALANCE: GHS 0.00</td>
+            </tr>
+        </tfoot>
+    </table>
 </div>
 {% endblock %}

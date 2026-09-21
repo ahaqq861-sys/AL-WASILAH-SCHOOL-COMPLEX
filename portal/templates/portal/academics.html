@@ -1,101 +1,142 @@
-{% extends 'portal/base.html' %}
+{% extends 'base.html' %}
 
 {% block content %}
-<div class="space-y-6 text-xs">
-    {% if user_profile.role == 'ADMIN' or user_profile.role == 'TEACHER' %}
-    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
-        <h2 class="text-base font-bold text-purple-950 mb-4">Upload Academic Results</h2>
+<style>
+    .print-actions { text-align: right; margin-bottom: 15px; }
+    .btn-print { background-color: var(--wine-primary); color: #fff; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+    .printable-card { background: #fff; padding: 30px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #ddd; }
+    .document-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--wine-primary); padding-bottom: 15px; margin-bottom: 20px; }
+    .school-info { text-align: center; flex-grow: 1; }
+    .school-info h2 { color: var(--wine-primary); font-size: 1.4rem; text-transform: uppercase; }
+    .school-info h4 { color: #555; font-size: 1rem; }
+    .doc-logo { width: 80px; height: 80px; object-fit: contain; }
+    .passport-photo { width: 85px; height: 100px; object-fit: cover; border: 1px solid #ccc; border-radius: 4px; }
+    .details-table, .results-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .details-table td { padding: 6px 10px; font-size: 0.9rem; }
+    .details-table td.label { font-weight: bold; color: #444; width: 18%; background: #f9f9f9; }
+    .results-table th, .results-table td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; font-size: 0.85rem; }
+    .results-table th { background-color: var(--wine-primary); color: #fff; }
+    .term-header { background: #f0f0f0; font-weight: bold; font-size: 0.9rem; text-transform: uppercase; padding: 6px; border: 1px solid #ddd; margin-top: 15px; }
+    .footer-signature { margin-top: 40px; display: flex; justify-content: space-between; align-items: flex-end; }
+</style>
 
-        <form method="POST" action="{% url 'portal:upload_results' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {% csrf_token %}
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Select Student *</label>
-                <select name="student_id" required class="w-full p-2 border rounded bg-white">
-                    {% for s in students %}
-                    <option value="{{ s.user.id }}">{{ s.user.get_full_name }} ({{ s.index_number }})</option>
-                    {% endfor %}
-                </select>
-            </div>
+<div class="print-actions no-print">
+    <button onclick="window.print()" class="btn-print"><i class="fa fa-print"></i> Print Academic Statement</button>
+</div>
 
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Subject / Course (Select or Type) *</label>
-                <input list="courses_list" name="course_name_input" placeholder="e.g. Mathematics or Type Subject..." class="w-full p-2 border rounded bg-white" required>
-                <datalist id="courses_list">
-                    {% for c in courses %}
-                    <option value="{{ c.name }}">
-                    {% endfor %}
-                </datalist>
-            </div>
+<div class="printable-card">
+    <!-- Document Header with School Logo & Passport Photo -->
+    <div class="document-header">
+        {% if branding and branding.logo_image %}
+            <img src="{{ branding.logo_image.url }}" class="doc-logo" alt="School Logo">
+        {% else %}
+            <img src="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm" class="doc-logo" alt="School Logo">
+        {% endif %}
 
-            <div>
-                <!-- Academic Term Input + Datalist (Editable & Selectable) -->
-                <label class="block font-bold text-gray-700 mb-1">Academic Term (Select or Type) *</label>
-                <input list="terms_list" name="term_input" value="Trimester 1" placeholder="e.g. Trimester 1, Trimester 2..." class="w-full p-2 border rounded bg-white" required>
-                <datalist id="terms_list">
-                    {% for t in terms %}
-                    <option value="{{ t.trimester }}">
-                    {% empty %}
-                    <option value="Trimester 1">
-                    <option value="Trimester 2">
-                    <option value="Trimester 3">
-                    {% endfor %}
-                </datalist>
-            </div>
+        <div class="school-info">
+            <h2>{{ branding.school_name|default:"AL-WASILAH SCHOOL COMPLEX" }}</h2>
+            <h4>ACADEMIC REPORT STATEMENT</h4>
+        </div>
 
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Score (0 - 100) *</label>
-                <input type="number" step="0.01" name="score" placeholder="e.g. 85.5" required class="w-full p-2 border rounded">
-            </div>
-
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Grade Letter *</label>
-                <input type="text" name="grade_letter" placeholder="e.g. A, B+, C" required class="w-full p-2 border rounded">
-            </div>
-
-            <div>
-                <label class="block font-bold text-gray-700 mb-1">Teacher Remark</label>
-                <input type="text" name="teacher_remark" placeholder="e.g. Excellent progress" class="w-full p-2 border rounded">
-            </div>
-
-            <div class="md:col-span-3">
-                <button type="submit" class="w-full py-2 bg-purple-900 text-white font-bold rounded hover:bg-purple-950">Save & Upload Result</button>
-            </div>
-        </form>
+        {% if student_profile and student_profile.passport_picture %}
+            <img src="{{ student_profile.passport_picture.url }}" class="passport-photo" alt="Passport Photo">
+        {% else %}
+            <img src="https://via.placeholder.com/85x100" class="passport-photo" alt="Passport Photo">
+        {% endif %}
     </div>
-    {% endif %}
 
-    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
-        <h3 class="font-bold text-sm text-gray-800 mb-3">Academic Grades Ledger</h3>
-        <table class="w-full text-left border-collapse">
-            <thead class="bg-purple-100 text-purple-950 font-bold">
-                <tr>
-                    <th class="p-2 border">Student</th>
-                    <th class="p-2 border">Course / Subject</th>
-                    <th class="p-2 border">Term</th>
-                    <th class="p-2 border">Score</th>
-                    <th class="p-2 border">Grade</th>
-                    <th class="p-2 border">Remark</th>
-                    <th class="p-2 border">Report Card</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y">
-                {% for g in grades %}
-                <tr>
-                    <td class="p-2 border font-semibold">{{ g.student.get_full_name|default:g.student.username }}</td>
-                    <td class="p-2 border">{{ g.course.name }}</td>
-                    <td class="p-2 border">{{ g.term.trimester }}</td>
-                    <td class="p-2 border font-bold text-purple-900">{{ g.score }}</td>
-                    <td class="p-2 border"><span class="px-2 py-0.5 bg-green-100 text-green-800 font-bold rounded">{{ g.grade_letter }}</span></td>
-                    <td class="p-2 border text-gray-600">{{ g.teacher_remark }}</td>
-                    <td class="p-2 border">
-                        <a href="{% url 'portal:report_card' g.student.id g.term.id %}" target="_blank" class="text-purple-700 font-bold hover:underline">View Card</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="7" class="p-4 text-center text-gray-500">No grades recorded yet.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Student Details -->
+    <table class="details-table">
+        <tr>
+            <td class="label">STUDENT NAME:</td>
+            <td>{{ request.user.get_full_name|default:request.user.username|upper }}</td>
+            <td class="label">INDEX NUMBER:</td>
+            <td>{{ student_profile.index_number|default:"AWS/2026/012" }}</td>
+        </tr>
+        <tr>
+            <td class="label">CLASS:</td>
+            <td>{{ student_profile.current_class|default:"BASIC 8" }}</td>
+            <td class="label">GENDER:</td>
+            <td>{{ student_profile.gender|default:"MALE" }}</td>
+        </tr>
+        <tr>
+            <td class="label">ACADEMIC YEAR:</td>
+            <td>{{ branding.current_academic_year|default:"2026/2027" }}</td>
+            <td class="label">DATE:</td>
+            <td>{% now "d-M-Y" %}</td>
+        </tr>
+    </table>
+
+    <!-- Subject Results Table -->
+    <div class="term-header">TERM ACADEMIC PERFORMANCE</div>
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th>Subject / Course</th>
+                <th>Class Score (40%)</th>
+                <th>Exam Score (60%)</th>
+                <th>Total Score (100%)</th>
+                <th>Grade</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in academic_results %}
+            <tr>
+                <td>{{ item.subject }}</td>
+                <td>{{ item.class_score }}</td>
+                <td>{{ item.exam_score }}</td>
+                <td>{{ item.total_score }}</td>
+                <td>{{ item.grade }}</td>
+                <td>{{ item.remarks }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td>ENGLISH LANGUAGE</td>
+                <td>32</td>
+                <td>50</td>
+                <td>82</td>
+                <td>A</td>
+                <td>EXCELLENT</td>
+            </tr>
+            <tr>
+                <td>MATHEMATICS</td>
+                <td>28</td>
+                <td>48</td>
+                <td>76</td>
+                <td>B+</td>
+                <td>VERY GOOD</td>
+            </tr>
+            <tr>
+                <td>INTEGRATED SCIENCE</td>
+                <td>35</td>
+                <td>52</td>
+                <td>87</td>
+                <td>A</td>
+                <td>EXCELLENT</td>
+            </tr>
+            <tr>
+                <td>SOCIAL STUDIES</td>
+                <td>30</td>
+                <td>45</td>
+                <td>75</td>
+                <td>B+</td>
+                <td>VERY GOOD</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Class Teacher & Headmaster Signatures -->
+    <div class="footer-signature">
+        <div>
+            <p><strong>Class Teacher Signature:</strong> ______________________</p>
+            <p style="margin-top: 5px;"><small>Class Teacher Remarks: Hardworking student with good behavior.</small></p>
+        </div>
+        <div>
+            <p><strong>Headmaster / Headmistress Signature:</strong> ______________________</p>
+            <p style="margin-top: 5px;"><small>Date: {% now "d-M-Y" %}</small></p>
+        </div>
     </div>
 </div>
 {% endblock %}

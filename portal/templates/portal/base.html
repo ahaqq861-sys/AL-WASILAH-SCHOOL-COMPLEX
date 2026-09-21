@@ -3,46 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Al-Wasilah School Complex Portal{% endblock %}</title>
+    <title>{% block title %}{{ branding.school_name|default:"School Portal" }}{% endblock %}</title>
 
-    <!-- Browser Tab Favicon Setup -->
+    <!-- Browser Tab Favicon -->
     {% if branding and branding.logo_image %}
         <link rel="icon" type="image/png" href="{{ branding.logo_image.url }}">
-        <link rel="shortcut icon" type="image/png" href="{{ branding.logo_image.url }}">
-        <link rel="apple-touch-icon" href="{{ branding.logo_image.url }}">
     {% else %}
         <link rel="icon" type="image/png" href="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm">
-        <link rel="shortcut icon" type="image/png" href="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm">
-        <link rel="apple-touch-icon" href="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm">
     {% endif %}
 
-    <!-- Custom Branding Theme Colors -->
+    <!-- FontAwesome & Base CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: {{ branding.primary_color|default:"#581c87" }};
-            --secondary-color: {{ branding.secondary_color|default:"#2e1065" }};
-            --accent-color: {{ branding.accent_color|default:"#eab308" }};
+            --wine-primary: #800020;
+            --wine-dark: #4a0012;
+            --wine-accent: #a0153e;
+            --wine-light: #f9f0f2;
+            --text-dark: #333333;
+            --bg-body: #f4f6f9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; background-color: var(--bg-body); min-height: 100vh; }
+
+        /* Wine Sidebar Styling */
+        .sidebar { width: 250px; background-color: #2c2e3e; color: #ffffff; flex-shrink: 0; display: flex; flex-direction: column; }
+        .sidebar-brand { background-color: var(--wine-primary); padding: 15px 20px; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
+        .sidebar-brand img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .user-panel { padding: 15px 20px; background-color: #242633; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #343746; }
+        .user-panel img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--wine-primary); }
+        .user-info { font-size: 0.85rem; }
+        .user-info strong { display: block; color: #ffffff; font-size: 0.9rem; }
+        .sidebar-menu { list-style: none; padding-top: 10px; }
+        .sidebar-menu li a { display: flex; align-items: center; padding: 12px 20px; color: #b8c7ce; text-decoration: none; font-size: 0.9rem; gap: 12px; }
+        .sidebar-menu li a:hover, .sidebar-menu li.active > a { background-color: var(--wine-primary); color: #ffffff; }
+
+        /* Main Section */
+        .main-wrapper { flex-grow: 1; display: flex; flex-direction: column; }
+        .top-navbar { height: 55px; background-color: var(--wine-primary); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; color: #ffffff; }
+        .navbar-nav { display: flex; align-items: center; gap: 15px; list-style: none; }
+        .content-body { padding: 20px; flex-grow: 1; }
+
+        /* Print Media Styles */
+        @media print {
+            .sidebar, .top-navbar, .no-print, .btn-print { display: none !important; }
+            body { background-color: #ffffff !important; }
+            .main-wrapper { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+            .content-body { padding: 0 !important; }
+            .printable-card { border: none !important; box-shadow: none !important; }
         }
     </style>
-
     {% block extra_css %}{% endblock %}
 </head>
 <body>
 
-    {% if branding and branding.enable_top_banner and branding.banner_announcement %}
-    <div style="background-color: var(--accent-color); text-align: center; padding: 8px; font-weight: bold;">
-        {{ branding.banner_announcement }}
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            {% if branding and branding.logo_image %}
+                <img src="{{ branding.logo_image.url }}" alt="Logo">
+            {% else %}
+                <img src="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm" alt="Logo">
+            {% endif %}
+            <span>{{ branding.school_name|default:"Al-Wasilah Portal" }}</span>
+        </div>
+
+        <div class="user-panel">
+            {% if student_profile and student_profile.passport_picture %}
+                <img src="{{ student_profile.passport_picture.url }}" alt="Student Picture">
+            {% else %}
+                <img src="https://via.placeholder.com/40" alt="Student Picture">
+            {% endif %}
+            <div class="user-info">
+                <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                <small>Class: {{ student_profile.current_class|default:"Basic 8" }}</small>
+            </div>
+        </div>
+
+        <ul class="sidebar-menu">
+            <li class="active"><a href="{% url 'portal_dashboard' %}"><i class="fa fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="{% url 'profile_view' %}"><i class="fa fa-user"></i> My Profile</a></li>
+            <li><a href="{% url 'academics_view' %}"><i class="fa fa-graduation-cap"></i> Academic Results</a></li>
+            <li><a href="{% url 'finance_view' %}"><i class="fa fa-file-invoice-dollar"></i> Fee Statement</a></li>
+            <li><a href="{% url 'timetable_view' %}"><i class="fa fa-calendar-alt"></i> Class Timetable</a></li>
+            <li><a href="{% url 'inbox_view' %}"><i class="fa fa-envelope"></i> Announcements</a></li>
+        </ul>
     </div>
-    {% endif %}
 
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+    <!-- Main Container -->
+    <div class="main-wrapper">
+        <div class="top-navbar">
+            <div><i class="fa fa-bars"></i> &nbsp; <strong>Student Read-Only Portal</strong></div>
+            <ul class="navbar-nav">
+                <li><i class="fa fa-calendar"></i> Academic Year: {{ branding.current_academic_year|default:"2026/2027" }}</li>
+                <li><a href="{% url 'logout' %}" style="color:#fff; text-decoration:none;"><i class="fa fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
 
-    <footer style="text-align: center; padding: 20px;">
-        <p>{{ branding.footer_copyright|default:"© 2026 Al-Wasilah School Complex. All Rights Reserved." }}</p>
-    </footer>
+        <div class="content-body">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
 
     {% block extra_js %}{% endblock %}
 </body>
