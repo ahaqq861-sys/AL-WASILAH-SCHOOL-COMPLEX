@@ -3,129 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ branding.school_name|default:"Al-Wasilah Portal" }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 font-sans antialiased text-gray-800 min-h-screen flex flex-col">
+    <title>{% block title %}Al-Wasilah School Complex Portal{% endblock %}</title>
 
-    <!-- Top Announcement Banner Bar -->
-    {% if branding.enable_top_banner and branding.banner_announcement %}
-    <div class="py-1.5 px-4 text-center text-xs font-bold text-gray-900 shadow-inner flex items-center justify-center space-x-2" style="background-color: {{ branding.accent_color|default:'#eab308' }};">
-        <i class="fas fa-bullhorn"></i>
-        <span>{{ branding.banner_announcement }}</span>
+    <!-- Browser Tab Favicon Setup -->
+    {% if branding and branding.logo_image %}
+        <link rel="icon" type="image/png" href="{{ branding.logo_image.url }}">
+        <link rel="shortcut icon" type="image/png" href="{{ branding.logo_image.url }}">
+        <link rel="apple-touch-icon" href="{{ branding.logo_image.url }}">
+    {% else %}
+        <link rel="icon" type="image/png" href="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm">
+        <link rel="shortcut icon" type="image/png" href="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm">
+        <link rel="apple-touch-icon" href="https://kommodo.ai/i/cor5nuCrLlKid0rUidpm">
+    {% endif %}
+
+    <!-- Custom Branding Theme Colors -->
+    <style>
+        :root {
+            --primary-color: {{ branding.primary_color|default:"#581c87" }};
+            --secondary-color: {{ branding.secondary_color|default:"#2e1065" }};
+            --accent-color: {{ branding.accent_color|default:"#eab308" }};
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    {% if branding and branding.enable_top_banner and branding.banner_announcement %}
+    <div style="background-color: var(--accent-color); text-align: center; padding: 8px; font-weight: bold;">
+        {{ branding.banner_announcement }}
     </div>
     {% endif %}
 
-    <div class="flex-1 flex min-w-0">
-        <!-- Sidebar with Primary Color Branding -->
-        <aside class="w-64 text-white min-h-screen flex flex-col justify-between shrink-0 shadow-lg" style="background-color: {{ branding.primary_color|default:'#581c87' }};">
-            <div class="p-4 space-y-6">
-                <!-- School Logo & Tagline Header -->
-                <div class="flex items-center space-x-3 px-2 border-b border-white/20 pb-4">
-                    {% if branding.logo_image %}
-                        <img src="{{ branding.logo_image.url }}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow">
-                    {% else %}
-                        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-base shadow">
-                            {{ branding.school_name|slice:":2"|upper }}
-                        </div>
-                    {% endif %}
-                    <div class="overflow-hidden">
-                        <h1 class="font-bold text-sm truncate leading-tight">{{ branding.school_name|default:"Al-Wasilah" }}</h1>
-                        <p class="text-[10px] text-white/80 truncate">{{ branding.logo_text|default:"School Portal" }}</p>
-                    </div>
-                </div>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
 
-                <!-- Sidebar Navigation -->
-                <nav class="space-y-1 text-xs">
-                    <a href="{% url 'portal:portal_dashboard' %}" class="flex items-center px-3 py-2.5 rounded-lg font-medium hover:bg-white/10 transition {% if active_tab == 'dashboard' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-chart-line w-6"></i> Dashboard
-                    </a>
+    <footer style="text-align: center; padding: 20px;">
+        <p>{{ branding.footer_copyright|default:"© 2026 Al-Wasilah School Complex. All Rights Reserved." }}</p>
+    </footer>
 
-                    {% if user_profile.role == 'ADMIN' or user.is_superuser %}
-                    <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-white/60 uppercase tracking-wider">Admin Controls</div>
-                    <a href="{% url 'portal:register_user' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-white/10 transition {% if active_tab == 'register' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-user-plus w-6"></i> Register Member
-                    </a>
-                    <a href="{% url 'portal:update_branding' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-white/10 transition {% if active_tab == 'branding' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-sliders-h w-6"></i> School Branding
-                    </a>
-                    {% endif %}
-
-                    <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-white/60 uppercase tracking-wider">Academics</div>
-                    <a href="{% url 'portal:academics_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-white/10 transition {% if active_tab == 'academics' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-book w-6"></i> Academics & Grades
-                    </a>
-                    <a href="{% url 'portal:attendance_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-white/10 transition {% if active_tab == 'attendance' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-clipboard-user w-6"></i> Attendance
-                    </a>
-                    <a href="{% url 'portal:timetable_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-white/10 transition {% if active_tab == 'timetable' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-calendar-alt w-6"></i> Class Timetable
-                    </a>
-
-                    <div class="pt-3 pb-1 px-3 text-[10px] font-bold text-white/60 uppercase tracking-wider">Finance</div>
-                    <a href="{% url 'portal:finance_view' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-white/10 transition {% if active_tab == 'finance' %}bg-white/20 font-bold{% endif %}">
-                        <i class="fas fa-wallet w-6"></i> Fees & Payments
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Profile & Logout Sidebar Footer -->
-            <div class="p-4 border-t border-white/20 bg-black/10 flex items-center justify-between text-xs">
-                <div class="flex items-center space-x-2 overflow-hidden">
-                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs uppercase shrink-0">
-                        {{ user.username|slice:":2" }}
-                    </div>
-                    <div class="overflow-hidden">
-                        <p class="font-bold truncate text-white">{{ user.get_full_name|default:user.username }}</p>
-                        <p class="text-[10px] text-white/70 uppercase font-semibold truncate">{{ user_profile.role|default:"USER" }}</p>
-                    </div>
-                </div>
-                <a href="{% url 'portal:logout' %}" class="text-white/80 hover:text-white font-bold ml-2 shrink-0" title="Logout">
-                    <i class="fas fa-sign-out-alt text-base"></i>
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 flex flex-col min-w-0">
-            <!-- Top Navbar Branded with Secondary Color -->
-            <header class="text-white px-6 py-4 flex items-center justify-between shadow" style="background-color: {{ branding.secondary_color|default:'#2e1065' }};">
-                <div class="flex items-center space-x-3">
-                    <h1 class="text-lg font-bold tracking-wide">{{ branding.school_name|default:"Al-Wasilah School Complex" }}</h1>
-                </div>
-                <div class="flex items-center space-x-4 text-xs">
-                    <span class="px-3 py-1 rounded-full font-semibold border border-white/30 bg-white/10">
-                        Term: {{ active_term.trimester|default:"Trimester 1" }} ({{ active_term.year|default:"2026/2027" }})
-                    </span>
-                    <span class="text-white/80"><i class="fas fa-phone mr-1"></i>{{ branding.contact_phone }}</span>
-                </div>
-            </header>
-
-            <!-- Flash Messages -->
-            <div class="p-4 pb-0 max-w-7xl w-full mx-auto">
-                {% if messages %}
-                    {% for message in messages %}
-                    <div class="p-3 mb-3 text-xs rounded-lg border {% if message.tags == 'error' %}bg-red-100 text-red-800 border-red-300{% else %}bg-green-100 text-green-800 border-green-300{% endif %}">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                {% endif %}
-            </div>
-
-            <!-- Dynamic Content -->
-            <div class="p-6 flex-1 max-w-7xl w-full mx-auto">
-                {% block content %}
-                {% endblock %}
-            </div>
-
-            <!-- Portal Footer with Copyright & Contact -->
-            <footer class="bg-white border-t p-4 text-center text-xs text-gray-500 space-y-1">
-                <p>{{ branding.footer_copyright|default:"© 2026 Al-Wasilah School Complex. All Rights Reserved." }}</p>
-                <p><strong>Contact:</strong> {{ branding.contact_phone }} | {{ branding.contact_email }} | {{ branding.address }}</p>
-            </footer>
-        </main>
-    </div>
-
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
