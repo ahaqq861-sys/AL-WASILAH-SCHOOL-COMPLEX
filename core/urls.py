@@ -1,14 +1,14 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
-from portal import views as portal_views  # Imports portal views directly
+from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     # Redirect root domain (/) to portal dashboard
     path('', lambda request: redirect('portal:dashboard')),
     
-    # Direct /login/ path to the portal login view
-    path('login/', portal_views.login_view, name='login'),
+    # Use standard Django LoginView rendering your template
+    path('login/', auth_views.LoginView.as_view(template_name='portal/login.html'), name='login'),
     
     # Main app routes
     path('admin/', admin.site.urls),
